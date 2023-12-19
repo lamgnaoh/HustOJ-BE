@@ -1,0 +1,14 @@
+package com.lamgnoah.hustoj.domain.enums;
+
+public enum Result {
+  ACCEPTED,
+  RUNTIME_ERROR,
+  CPU_TIME_LIMIT_EXCEEDED,
+  TIME_LIMIT_EXCEEDED,
+  MEMORY_LIMIT_EXCEEDED,
+  COMPILE_ERROR,
+  WRONG_ANSWER,
+  SYSTEM_ERROR,
+  WAITING,
+  JUDGE_CLIENT_ERROR
+}
