@@ -1,15 +1,25 @@
 package com.lamgnoah.hustoj.entity;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.lamgnoah.hustoj.domain.ContestProblemSubmitInfo;
+import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.hibernate.annotations.NotFound;
 import org.hibernate.annotations.NotFoundAction;
 
@@ -34,8 +44,9 @@ public class RankingUser extends BaseEntity {
 
   private Integer submitCount = 0;
 
-  @Column(name = "submission_info", columnDefinition = "json default ('{}')")
-  private String submissionInfo;
+  @Column(name = "submission_info" , columnDefinition = "json default ('{}')")
+  @Convert(converter = SubmissionInfoConverter.class)
+  private Map<Long , ContestProblemSubmitInfo>  submissionInfo = new HashMap<>();
 
   private Double score = 0.0;
 
@@ -61,4 +72,30 @@ public class RankingUser extends BaseEntity {
     this.score += score;
   }
 
+  @Slf4j
+  static class SubmissionInfoConverter implements AttributeConverter<Map<Long , ContestProblemSubmitInfo> , String> {
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    @Override
+    public String convertToDatabaseColumn(Map<Long, ContestProblemSubmitInfo> submissionInfo) {
+      String submissionInfoJson = null;
+      try {
+        submissionInfoJson = objectMapper.writeValueAsString(submissionInfo);
+      } catch (final JsonProcessingException e) {
+        log.error("JSON writing error", e);
+      }
+      return submissionInfoJson;
+    }
+
+    @Override
+    public Map<Long, ContestProblemSubmitInfo> convertToEntityAttribute(String submissionInfoJson) {
+      Map<Long, ContestProblemSubmitInfo> submissionInfo = null;
+      try {
+        submissionInfo = objectMapper.readValue(submissionInfoJson, new TypeReference<HashMap<Long, ContestProblemSubmitInfo>>() {});
+      } catch (final IOException e) {
+        log.error("JSON reading error", e);
+      }
+      return submissionInfo;
+    }
+  }
 }
