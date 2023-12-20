@@ -104,7 +104,7 @@ public class ContestRestController {
       ContestProblemQuery contestProblemQuery,
       @RequestParam(value = "page", defaultValue = "0") Integer page,
       @RequestParam(value = "size", defaultValue = "10") Integer size)
-   throws AppException {
+      throws AppException, JsonProcessingException {
     return contestService.findAllProblems(id , page , size , contestProblemQuery);
   }
 

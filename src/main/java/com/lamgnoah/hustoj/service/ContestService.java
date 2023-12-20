@@ -18,7 +18,8 @@ public interface ContestService {
 
   void delete(Long id);
 
-  PageDTO<ProblemDTO> findAllProblems(Long id , Integer page , Integer pageSize , ContestProblemQuery contestProblemQuery);
+  PageDTO<ProblemDTO> findAllProblems(Long id , Integer page , Integer pageSize , ContestProblemQuery contestProblemQuery)
+      throws JsonProcessingException;
 
   PageDTO<ContestDTO> findCriteria(Integer page, Integer size, ContestQuery contestQuery);
 

@@ -1,5 +1,5 @@
 # Hust Online Judge Backend
-##Tech stack
+## Tech stack
 1. Spring Boot
 2. Spring security
 3. Jwt

@@ -21,4 +21,6 @@ public interface SubmissionService {
   void counter(SubmissionDTO submissionDTO) throws JsonProcessingException;
 
   SubmissionDTO createContestSubmission(SubmissionDTO submissionDTO) throws JsonProcessingException;
+
+  List<SubmissionDTO> findByContestProblem(Long contestId, Long problemId);
 }

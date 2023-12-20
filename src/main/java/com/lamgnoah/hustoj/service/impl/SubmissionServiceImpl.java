@@ -155,6 +155,23 @@ public class SubmissionServiceImpl implements SubmissionService {
     return dto;
   }
 
+  @Override
+  public List<SubmissionDTO> findByContestProblem(Long contestId, Long problemId) {
+    User user = UserContext.getCurrentUser();
+    Problem problem =
+        problemRepository
+            .findById(problemId)
+            .orElseThrow(() -> new AppException(ErrorCode.NO_SUCH_PROBLEM));
+    Contest contest =
+        contestRepository
+            .findById(contestId)
+            .orElseThrow(() -> new AppException(ErrorCode.NO_SUCH_CONTEST));
+    List<Submission> submissionList =
+        submissionRepository.findByContestAndProblemAndAuthor(
+            contest, problem, user);
+    return submissionMapper.toSubmissionDTOs(submissionList);
+  }
+
   private void updateACMContestRank(RankingUser rankingUser, Submission submission,
       ContestProblem contestProblem) {
     Map<Long, ContestProblemSubmitInfo> submissionInfo = rankingUser.getSubmissionInfo();

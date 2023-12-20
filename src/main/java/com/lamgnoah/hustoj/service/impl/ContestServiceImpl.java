@@ -3,23 +3,21 @@ package com.lamgnoah.hustoj.service.impl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.lamgnoah.hustoj.domain.AcmProblemStatus;
+import com.lamgnoah.hustoj.domain.OiProblemStatus;
 import com.lamgnoah.hustoj.domain.UserContext;
 import com.lamgnoah.hustoj.domain.enums.ContestRuleType;
 import com.lamgnoah.hustoj.domain.enums.ContestStatus;
 import com.lamgnoah.hustoj.domain.enums.ContestType;
-import com.lamgnoah.hustoj.domain.enums.Difficulty;
 import com.lamgnoah.hustoj.domain.enums.ErrorCode;
 import com.lamgnoah.hustoj.dto.ContestDTO;
 import com.lamgnoah.hustoj.dto.PageDTO;
 import com.lamgnoah.hustoj.dto.ProblemDTO;
 import com.lamgnoah.hustoj.dto.RankingUserDTO;
-import com.lamgnoah.hustoj.dto.TestcaseInfoDTO;
 import com.lamgnoah.hustoj.entity.Contest;
 import com.lamgnoah.hustoj.entity.ContestProblem;
 import com.lamgnoah.hustoj.entity.Problem;
 import com.lamgnoah.hustoj.entity.RankingUser;
-import com.lamgnoah.hustoj.entity.SampleIO;
-import com.lamgnoah.hustoj.entity.Tag;
 import com.lamgnoah.hustoj.entity.User;
 import com.lamgnoah.hustoj.exception.AppException;
 import com.lamgnoah.hustoj.factory.RankingUserFactory;
@@ -44,10 +42,7 @@ import com.lamgnoah.hustoj.utils.CommonUtil;
 import jakarta.persistence.criteria.Predicate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -182,7 +177,7 @@ public class ContestServiceImpl implements ContestService {
 
   @Override
   public PageDTO<ProblemDTO> findAllProblems(Long id, Integer page, Integer pageSize,
-      ContestProblemQuery contestProblemQuery) {
+      ContestProblemQuery contestProblemQuery) throws JsonProcessingException {
     User user = UserContext.getCurrentUser();
 
     Contest contest = contestRepository.findById(id)
@@ -194,9 +189,37 @@ public class ContestServiceImpl implements ContestService {
     List<ContestProblem> contestProblemList = contestProblemRepository.findByContestAndParam(
         contest, contestProblemQuery);
     List<ProblemDTO> problemDTOs = contestProblemMapper.toContestProblemDTOs(contestProblemList);
+    for (ProblemDTO dto : problemDTOs) {
+      addContestProblemStatus(dto, user);
+    }
 
     return new PageDTO<>(page, pageSize, (long) problemDTOs.size(), problemDTOs);
   }
+
+  private void addContestProblemStatus(ProblemDTO dto, User user) throws JsonProcessingException {
+    String acmProblemsStatusJson = user.getAcmProblemsStatus();
+    String oiProblemsStatusJson = user.getOiProblemsStatus();
+    if (dto.getRuleType().equals(ContestRuleType.ACM.name())) {
+      AcmProblemStatus acmProblemStatus = objectMapper.readValue(acmProblemsStatusJson,
+          AcmProblemStatus.class);
+      if (acmProblemStatus.getContestProblem() == null
+          || acmProblemStatus.getContestProblem().get(dto.getId()) == null) {
+        dto.setMyStatus(null);
+        return;
+      }
+      dto.setMyStatus(acmProblemStatus.getContestProblem().get(dto.getId()).getStatus());
+    } else {
+      OiProblemStatus oiProblemStatus = objectMapper.readValue(oiProblemsStatusJson,
+          OiProblemStatus.class);
+      if (oiProblemStatus.getContestProblem() == null
+          || oiProblemStatus.getContestProblem().get(dto.getId()) == null) {
+        dto.setMyStatus(null);
+        return;
+      }
+      dto.setMyStatus(oiProblemStatus.getContestProblem().get(dto.getId()).getStatus());
+    }
+  }
+
 
   @Override
   public PageDTO<ContestDTO> findCriteria(Integer page, Integer size, ContestQuery contestQuery) {
@@ -381,7 +404,8 @@ public class ContestServiceImpl implements ContestService {
       throw new AppException(ErrorCode.OBJECT_NOT_CREATED_BY_USER);
     }
 
-    if (!contest.getStatus().equals(ContestStatus.ENDED)) { // only update problem when contest not ended
+    if (!contest.getStatus()
+        .equals(ContestStatus.ENDED)) { // only update problem when contest not ended
       if (problemDTO.getVisible() != null) { // update visible in problem contest
         contestProblem.setVisible(problemDTO.getVisible());
       }
@@ -414,6 +438,7 @@ public class ContestServiceImpl implements ContestService {
     ProblemDTO dto = contestProblemMapper.entityToDTO(contestProblem);
     dto.setTestcaseInfos(objectMapper.readValue(problem.getTestCaseScore(), new TypeReference<>() {
     }));
+    addContestProblemStatus(dto, user);
     return dto;
   }
 
