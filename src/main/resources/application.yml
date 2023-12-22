@@ -14,9 +14,16 @@ spring:
     properties:
       hibernate:
         format_sql: true
+  data:
+    redis:
+      host: localhost
+      database: 0
+      port: 6379
+      password: passredis
+      timeout: 1000
 
 upload:
-  path: /home/lamhoang/testcase/upload
+  path: ../../../deploy/backend/upload/problems
 judger:
   token: 50f155d68905eb9fc33a23dd821204167eba0fdaf8197abbf75f8edf60ccae98
   url: http://0.0.0.0:12358

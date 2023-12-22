@@ -6,6 +6,7 @@ import com.lamgnoah.hustoj.entity.Problem;
 import com.lamgnoah.hustoj.query.ContestProblemQuery;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -32,11 +33,20 @@ public interface ContestProblemRepository extends JpaRepository<ContestProblem, 
 
   @Query(value = "select cp.* from contest_problem cp "
       + "inner join problem p on (cp.problem_id = p.id) " + "where contest_id = :#{#contest.id} "
+      + "and cp.visible = true "
       + "and (:#{#contestProblemQuery.keyword} is null or "
       + "((lower(p.problem_code) like lower(concat('%', concat(:#{#contestProblemQuery.keyword},'%'))))"
-      + "or (lower(p.title) like lower(concat('%', concat(:#{#contestProblemQuery.keyword},'%'))))))", nativeQuery = true)
+      + "or (lower(p.title) like lower(concat('%', concat(:#{#contestProblemQuery.keyword},'%')))))) "
+      + "order by cp.created_at",
+      countQuery = "select count(*) from contest_problem cp "
+          + "inner join problem p on (cp.problem_id = p.id) " + "where contest_id = :#{#contest.id} "
+          + "and cp.visible = true "
+          + "and (:#{#contestProblemQuery.keyword} is null or "
+          + "((lower(p.problem_code) like lower(concat('%', concat(:#{#contestProblemQuery.keyword},'%'))))"
+          + "or (lower(p.title) like lower(concat('%', concat(:#{#contestProblemQuery.keyword},'%'))))))",
+      nativeQuery = true)
   List<ContestProblem> findByContestAndParam(@Param("contest") Contest contest,
-      @Param("contestProblemQuery") ContestProblemQuery contestProblemQuery);
+      @Param("contestProblemQuery") ContestProblemQuery contestProblemQuery, Pageable pageable);
 
   Optional<ContestProblem> findByContestAndProblem(Contest contest, Problem problem);
 

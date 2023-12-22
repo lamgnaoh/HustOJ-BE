@@ -5,6 +5,8 @@ import com.lamgnoah.hustoj.entity.Problem;
 import com.lamgnoah.hustoj.entity.Submission;
 import com.lamgnoah.hustoj.entity.User;
 import java.util.List;
+import java.util.Optional;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
@@ -22,4 +24,10 @@ public interface SubmissionRepository extends JpaRepository<Submission , Long> ,
   List<Submission> findByProblemAndIsPracticeAndAuthor(Problem problem, boolean b, User user);
 
   List<Submission> findByContestAndProblemAndAuthor(Contest contest, Problem problem, User user);
+
+  List<Submission> findByContest(Contest contest, Pageable pageable);
+
+  long countByContest(Contest contest);
+
+  Optional<Submission> findByContestAndProblem(Contest contest, Problem problem);
 }

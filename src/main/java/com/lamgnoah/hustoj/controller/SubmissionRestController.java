@@ -71,5 +71,14 @@ public class SubmissionRestController {
     return submissionService.findByContestProblem(contestId, problemId);
   }
 
+  @GetMapping(value = "/contests/{id}/submissions")
+  public PageDTO<SubmissionDTO> getSubmissions(
+      @PathVariable Long id,
+      @RequestParam(defaultValue = "0") Integer page,
+      @RequestParam(defaultValue = "10") Integer size)
+      throws AppException {
+    return submissionService.findAllSubmissionByContest(id, page, size);
+  }
+
 
 }

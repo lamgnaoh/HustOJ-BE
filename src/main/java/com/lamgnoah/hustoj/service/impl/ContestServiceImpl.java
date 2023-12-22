@@ -18,14 +18,13 @@ import com.lamgnoah.hustoj.entity.Contest;
 import com.lamgnoah.hustoj.entity.ContestProblem;
 import com.lamgnoah.hustoj.entity.Problem;
 import com.lamgnoah.hustoj.entity.RankingUser;
+import com.lamgnoah.hustoj.entity.Submission;
 import com.lamgnoah.hustoj.entity.User;
 import com.lamgnoah.hustoj.exception.AppException;
 import com.lamgnoah.hustoj.factory.RankingUserFactory;
 import com.lamgnoah.hustoj.mapper.ContestMapper;
 import com.lamgnoah.hustoj.mapper.ContestProblemMapper;
-import com.lamgnoah.hustoj.mapper.ProblemMapper;
 import com.lamgnoah.hustoj.mapper.RankingUserMapper;
-import com.lamgnoah.hustoj.mapper.TagMapper;
 import com.lamgnoah.hustoj.query.ContestProblemQuery;
 import com.lamgnoah.hustoj.query.ContestQuery;
 import com.lamgnoah.hustoj.query.RankingUserQuery;
@@ -34,7 +33,6 @@ import com.lamgnoah.hustoj.repository.ContestRepository;
 import com.lamgnoah.hustoj.repository.ProblemRepository;
 import com.lamgnoah.hustoj.repository.RankingUserRepository;
 import com.lamgnoah.hustoj.repository.SubmissionRepository;
-import com.lamgnoah.hustoj.repository.TagRepository;
 import com.lamgnoah.hustoj.repository.UserRepository;
 import com.lamgnoah.hustoj.service.ContestService;
 import com.lamgnoah.hustoj.service.ProblemService;
@@ -67,13 +65,10 @@ public class ContestServiceImpl implements ContestService {
   private final ContestProblemMapper contestProblemMapper;
   private final ProblemRepository problemRepository;
   private final ProblemService problemService;
-  private final ProblemMapper problemMapper;
   private final RankingUserRepository rankingUserRepository;
   private final RankingUserMapper rankingUserMapper;
   private final UserRepository userRepository;
   private final ObjectMapper objectMapper;
-  private final TagMapper tagMapper;
-  private final TagRepository tagRepository;
 
   @Override
   public ContestDTO create(ContestDTO contestDTO) {
@@ -165,10 +160,6 @@ public class ContestServiceImpl implements ContestService {
       throw new AppException(ErrorCode.OBJECT_NOT_CREATED_BY_USER);
     }
     Set<RankingUser> rankingUserList = rankingUserRepository.findByContest(contest);
-//    Todo
-//    for (RankingUser rankingUser : rankingUserList) {
-//      timeCostRepository.deleteAllByRankingUser(rankingUser);
-//    }
     submissionRepository.deleteAllByContest(contest);
     rankingUserRepository.deleteAll(rankingUserList);
     contestProblemRepository.deleteAllByContest(contest);
@@ -179,6 +170,7 @@ public class ContestServiceImpl implements ContestService {
   public PageDTO<ProblemDTO> findAllProblems(Long id, Integer page, Integer pageSize,
       ContestProblemQuery contestProblemQuery) throws JsonProcessingException {
     User user = UserContext.getCurrentUser();
+    Pageable pageable = PageRequest.of(page, pageSize);
 
     Contest contest = contestRepository.findById(id)
         .orElseThrow(() -> new AppException(ErrorCode.NO_SUCH_CONTEST));
@@ -187,7 +179,7 @@ public class ContestServiceImpl implements ContestService {
       throw new AppException(ErrorCode.CONTEST_NOT_GOING);
     }
     List<ContestProblem> contestProblemList = contestProblemRepository.findByContestAndParam(
-        contest, contestProblemQuery);
+        contest, contestProblemQuery, pageable);
     List<ProblemDTO> problemDTOs = contestProblemMapper.toContestProblemDTOs(contestProblemList);
     for (ProblemDTO dto : problemDTOs) {
       addContestProblemStatus(dto, user);
@@ -436,8 +428,7 @@ public class ContestServiceImpl implements ContestService {
 
     ContestProblem contestProblem = contestProblemOptional.get();
     ProblemDTO dto = contestProblemMapper.entityToDTO(contestProblem);
-    dto.setTestcaseInfos(objectMapper.readValue(problem.getTestCaseScore(), new TypeReference<>() {
-    }));
+    dto.setTestcaseInfos(objectMapper.readValue(problem.getTestCaseScore(), new TypeReference<>() {}));
     addContestProblemStatus(dto, user);
     return dto;
   }
@@ -486,8 +477,11 @@ public class ContestServiceImpl implements ContestService {
     if (!CommonUtil.ensureCreatedBy(contestProblem, user)) {
       throw new AppException(ErrorCode.OBJECT_NOT_CREATED_BY_USER);
     }
-//    Todo
-//    timeCostRepository.deleteAllByContestProblem(contestProblemList);
+    Optional<Submission> contestProblemSubmission = submissionRepository.findByContestAndProblem(
+        contest, problem);
+    if (contestProblemSubmission.isPresent()) {
+      throw new AppException(ErrorCode.CANNOT_DELETE_CONTEST_PROBLEM_HAS_SUBMISSION);
+    }
     contestProblemRepository.delete(contestProblem);
   }
 
@@ -531,12 +525,7 @@ public class ContestServiceImpl implements ContestService {
     contestRepository.findById(contetsId)
         .orElseThrow(() -> new AppException(ErrorCode.NO_SUCH_CONTEST));
     List<RankingUser> rankingUserList = rankingUserRepository.findAllById(userIdList);
-
-    for (RankingUser rankingUser : rankingUserList) {
-//      Todo:
-//      timeCostRepository.deleteAllByRankingUser(rankingUser);
-      rankingUserRepository.delete(rankingUser);
-    }
+    rankingUserRepository.deleteAll(rankingUserList);
 
   }
 
@@ -553,8 +542,6 @@ public class ContestServiceImpl implements ContestService {
       if (!userSet.contains(user)) {
         RankingUser rankingUser = rankingUserRepository.save(
             RankingUserFactory.create(user, contest));
-//        Todo
-//        timeCostRepository.saveAll(TimeCostFactory.createList(contest, rankingUser));
         addRankingUserList.add(rankingUser);
       } else {
         throw new AppException(ErrorCode.USER_ALREADY_IN_CONTEST);

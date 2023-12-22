@@ -1,0 +1,62 @@
+version: "3"
+services:
+  judger:
+    image: registry.cn-hangzhou.aliyuncs.com/onlinejudge/judge_server
+    container_name: hustoj-judger
+    read_only: true
+    cap_drop:
+      - SETPCAP
+      - MKNOD
+      - NET_BIND_SERVICE
+      - SYS_CHROOT
+      - SETFCAP
+      - FSETID
+    tmpfs:
+      - /tmp
+    volumes:
+      - ./backend/upload/problems:/test_case:ro
+      - ./judger/log:/log
+      # - $PWD/server:/code:ro
+      - ./judger/run:/judger
+    environment:
+      - BACKEND_URL=http://host.docker.internal:8081/api/v1/judge_server_heartbeat
+      - SERVICE_URL=http://0.0.0.0:12358
+      - TOKEN=acmOJ_shu
+    ports:
+      - '0.0.0.0:12358:8080'
+    networks:
+      - webnet
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+#  mysql:
+#    image: mysql:5
+#    container_name: mysql
+#    command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+#    restart: always
+#    environment:
+#      MYSQL_ROOT_PASSWORD: passmysql
+#    ports:
+#      - '3306:3306'
+#    volumes:
+#      - './mysql/db:/var/lib/mysql'
+#      - './mysql/conf:/etc/mysql/conf.d'
+#      - './init/mysql:/docker-entrypoint-initdb.d'
+#    networks:
+#      - webnet
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    command: redis-server --requirepass passredis
+    ports:
+      - "6379:6379"
+    volumes:
+      - "./redis/data:/data"
+    networks:
+      - webnet
+
+
+networks:
+  webnet:
+

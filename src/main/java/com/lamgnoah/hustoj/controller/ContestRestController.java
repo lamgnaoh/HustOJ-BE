@@ -12,7 +12,6 @@ import com.lamgnoah.hustoj.query.RankingUserQuery;
 import com.lamgnoah.hustoj.service.ContestService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;

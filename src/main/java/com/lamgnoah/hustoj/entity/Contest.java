@@ -56,9 +56,6 @@ public class Contest extends BaseEntity {
   @Enumerated(EnumType.STRING)
   private ContestStatus status = ContestStatus.NOT_STARTED;
 
-//  TODO
-//  @Enumerated(EnumType.STRING)
-//  private JudgeType judgeType = JudgeType.IMMEDIATELY;
 
   private Boolean realTimeRank = true;
 

@@ -14,8 +14,6 @@ import org.springframework.web.bind.annotation.RestController;
 public class TagRestController {
 
   private final TagService tagService;
-
-
   @GetMapping
   public List<TagDTO> getTags() {
     return tagService.getTags();

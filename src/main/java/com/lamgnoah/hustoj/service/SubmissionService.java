@@ -23,4 +23,6 @@ public interface SubmissionService {
   SubmissionDTO createContestSubmission(SubmissionDTO submissionDTO) throws JsonProcessingException;
 
   List<SubmissionDTO> findByContestProblem(Long contestId, Long problemId);
+
+  PageDTO<SubmissionDTO> findAllSubmissionByContest(Long contestId, Integer page, Integer size);
 }

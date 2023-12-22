@@ -55,12 +55,14 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.aop.framework.AopContext;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -86,6 +88,7 @@ public class SubmissionServiceImpl implements SubmissionService {
 
 
   @Override
+  @Transactional
   public SubmissionDTO createPracticeSubmission(SubmissionDTO submissionDTO)
       throws JsonProcessingException {
     User user = UserContext.getCurrentUser();
@@ -108,11 +111,13 @@ public class SubmissionServiceImpl implements SubmissionService {
     submission.setResultDetail(objectMapper.writeValueAsString(judgeResult));
     submission.setMemory(judgeResult.getMemory());
     SubmissionDTO dto = submissionMapper.entityToDTO(submissionRepository.save(submission));
-    counter(dto);
+    SubmissionService submissionService = (SubmissionService) AopContext.currentProxy();
+    submissionService.counter(dto);
     return dto;
   }
 
   @Override
+  @Transactional
   public SubmissionDTO createContestSubmission(SubmissionDTO submissionDTO)
       throws JsonProcessingException {
     User user = UserContext.getCurrentUser();
@@ -137,22 +142,28 @@ public class SubmissionServiceImpl implements SubmissionService {
     submission.setIsPractice(false);
     submission.setProblem(problem);
     JudgeResult judgeResult = judge(submission, problem);
-
     submission.setDuration(judgeResult.getRealTime());
     submission.setResult(judgeResult.getResult());
     submission.setResultDetail(objectMapper.writeValueAsString(judgeResult));
     submission.setMemory(judgeResult.getMemory());
     SubmissionDTO dto = submissionMapper.entityToDTO(submissionRepository.save(submission));
-    counter(dto);
+    SubmissionService submissionService = (SubmissionService) AopContext.currentProxy();
+    submissionService.counter(dto);
+
     if (rankingUserOptional.isPresent()) {
       RankingUser rankingUser = rankingUserOptional.get();
       ContestProblem contestProblem = contestProblemRepository.findByContestAndProblem(contest,
           problem).orElseThrow(() -> new AppException(ErrorCode.NO_SUCH_PROBLEM_IN_CONTEST));
       if (contest.getContestRuleType().equals(ContestRuleType.ACM)) {
         updateACMContestRank(rankingUser, submission, contestProblem);
+      } else {
+        updateOIContestRank(rankingUser, submission, contestProblem);
       }
     }
     return dto;
+  }
+
+  private void updateOIContestRank(RankingUser rankingUser, Submission submission, ContestProblem contestProblem) {
   }
 
   @Override
@@ -170,6 +181,25 @@ public class SubmissionServiceImpl implements SubmissionService {
         submissionRepository.findByContestAndProblemAndAuthor(
             contest, problem, user);
     return submissionMapper.toSubmissionDTOs(submissionList);
+  }
+
+  @Override
+  public PageDTO<SubmissionDTO> findAllSubmissionByContest(Long contestId, Integer page,
+      Integer size) {
+    User user = UserContext.getCurrentUser();
+    Contest contest =
+        contestRepository
+            .findById(contestId)
+            .orElseThrow(() -> new AppException(ErrorCode.NO_SUCH_CONTEST));
+
+    if (!CommonUtil.isAdmin(user)) {
+      requireContestUser(contest, rankingUserRepository.findByContestAndUser(contest, user));
+    }
+    List<Submission> submissionList;
+    Pageable pageable = PageRequest.of(page, size, Sort.Direction.ASC, "createDate");
+    submissionList = submissionRepository.findByContest(contest, pageable);
+    long total = submissionRepository.countByContest(contest);
+    return new PageDTO<>(page, size, total, submissionMapper.toSubmissionDTOs(submissionList));
   }
 
   private void updateACMContestRank(RankingUser rankingUser, Submission submission,
@@ -316,6 +346,7 @@ public class SubmissionServiceImpl implements SubmissionService {
   }
 
   @Override
+  @Transactional
   public void counter(SubmissionDTO submissionDTO) throws JsonProcessingException {
     User user = userRepository.findById(submissionDTO.getAuthorId())
         .orElseThrow(() -> new AppException(ErrorCode.NO_SUCH_USER));
@@ -471,10 +502,8 @@ public class SubmissionServiceImpl implements SubmissionService {
     String err = resBodyJson.get("err").textValue();
     JudgeResult result = new JudgeResult();
     if (!CommonUtil.isNull(err)) {
-      if (err.equals(COMPILE_ERROR.name())) {
+      if (err.equals("CompileError")) {
         result.setResult(COMPILE_ERROR);
-      } else if (err.equals(JUDGE_CLIENT_ERROR.name())) {
-        result.setResult(JUDGE_CLIENT_ERROR);
       } else {
         result.setResult(Result.SYSTEM_ERROR);
       }
