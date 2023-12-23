@@ -54,6 +54,7 @@ public class ProblemRestController {
   }
 
   @GetMapping(value = "/{id}/admin")
+  @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
   public ResponseEntity<ProblemDTO> adminGetProblem(@PathVariable Long id)
       throws JsonProcessingException {
     ProblemDTO problemDTO = problemService.adminFindProblemById(id);

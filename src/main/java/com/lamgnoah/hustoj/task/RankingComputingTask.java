@@ -1,5 +1,7 @@
 package com.lamgnoah.hustoj.task;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lamgnoah.hustoj.domain.enums.ContestRuleType;
 import com.lamgnoah.hustoj.domain.enums.ContestStatus;
 import com.lamgnoah.hustoj.entity.Contest;
@@ -23,9 +25,10 @@ public class RankingComputingTask {
   private final RankingUserRepository rankingUserRepository;
 
   private final RedisTemplate<String, String> redisTemplate;
+  private final ObjectMapper objectMapper;
 
   @Scheduled(fixedRate = 10000)
-  public void computeContestRank() {
+  public void computeContestRank() throws JsonProcessingException {
     List<Contest> contestList =
         contestRepository.findByStatus(ContestStatus.PROCESSING);
     for (Contest contest : contestList) {
@@ -37,11 +40,28 @@ public class RankingComputingTask {
         for (RankingUser rankingUser : rankingUserList) {
           Long time = rankingUser.getTime();
           Integer acCount = rankingUser.getAcceptCount();
-//          because ac count maybe never greater than 100 in 1 contest
-          long zscore = (long) ((100 - acCount) * Math.ceil(contestDuration/10.0) * 10 + time);
+          Integer submitCount = rankingUser.getSubmitCount();
+          long zscore = (long) (acCount * Math.ceil(contestDuration/10.0) * 100 + time/1000);
           redisTemplate.opsForZSet().add("contest:" + contest.getId(),
               String.valueOf(rankingUser.getUser().getId()),
               zscore);
+//          store user ranking information
+          redisTemplate.opsForHash()
+              .put("contest:" + contest.getId() + ":user:" + rankingUser.getUser().getId(),
+                  "acceptCount", String.valueOf(acCount));
+          redisTemplate.opsForHash()
+              .put("contest:" + contest.getId() + ":user:" + rankingUser.getUser().getId(),
+                  "submitCount", String.valueOf(submitCount));
+          redisTemplate.opsForHash()
+              .put("contest:" + contest.getId() + ":user:" + rankingUser.getUser().getId(),
+                  "time", String.valueOf(time));
+          redisTemplate.opsForHash()
+              .put("contest:" + contest.getId() + ":user:" + rankingUser.getUser().getId(),
+                  "submission_info", objectMapper.writeValueAsString(rankingUser.getSubmissionInfo()));
+          redisTemplate.opsForHash()
+              .put("contest:" + contest.getId() + ":user:" + rankingUser.getUser().getId(),
+                  "username", rankingUser.getUser().getUsername());
+
         }
       } else {
         for (RankingUser rankingUser : rankingUserList) {

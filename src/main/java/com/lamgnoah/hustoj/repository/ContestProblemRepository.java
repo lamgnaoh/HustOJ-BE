@@ -55,5 +55,17 @@ public interface ContestProblemRepository extends JpaRepository<ContestProblem, 
   Optional<ContestProblem> findByContestAndProblemTitle(Contest contest , String title);
 
   Optional<ContestProblem> findByContestAndProblemProblemCode(Contest contest, String problemCode);
-
+  @Query(value = "select cp.* from contest_problem cp "
+      + "inner join problem p on (cp.problem_id = p.id) " + "where contest_id = :#{#contest.id} "
+      + "and (:#{#contestProblemQuery.keyword} is null or "
+      + "((lower(p.problem_code) like lower(concat('%', concat(:#{#contestProblemQuery.keyword},'%'))))"
+      + "or (lower(p.title) like lower(concat('%', concat(:#{#contestProblemQuery.keyword},'%')))))) "
+      + "order by cp.created_at",
+      countQuery = "select count(*) from contest_problem cp "
+          + "inner join problem p on (cp.problem_id = p.id) " + "where contest_id = :#{#contest.id} "
+          + "and (:#{#contestProblemQuery.keyword} is null or "
+          + "((lower(p.problem_code) like lower(concat('%', concat(:#{#contestProblemQuery.keyword},'%'))))"
+          + "or (lower(p.title) like lower(concat('%', concat(:#{#contestProblemQuery.keyword},'%'))))))",
+      nativeQuery = true)
+  List<ContestProblem> adminFindByContestAndParam(Contest contest, ContestProblemQuery contestProblemQuery, Pageable pageable);
 }

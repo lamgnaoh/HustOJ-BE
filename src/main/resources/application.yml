@@ -23,7 +23,7 @@ spring:
       timeout: 1000
 
 upload:
-  path: ../../../deploy/backend/upload/problems
+  path: ./deploy/backend/upload
 judger:
   token: 50f155d68905eb9fc33a23dd821204167eba0fdaf8197abbf75f8edf60ccae98
   url: http://0.0.0.0:12358

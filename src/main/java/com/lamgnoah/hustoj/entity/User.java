@@ -99,10 +99,10 @@ public class User extends BaseEntity{
 *
 * */
   @Column(name = "acm_problems_status" ,columnDefinition = "json default ('{}')" )
-  private String acmProblemsStatus;
+  private String acmProblemsStatus = "{}";
 
   @Column(name = "oi_problems_status" , columnDefinition = "json default ('{}')")
-  private String oiProblemsStatus;
+  private String oiProblemsStatus = "{}";
 
   @NotNull
   private Boolean enabled = true;

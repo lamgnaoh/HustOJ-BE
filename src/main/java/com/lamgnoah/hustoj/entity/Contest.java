@@ -77,11 +77,6 @@ public class Contest extends BaseEntity {
   @JsonIgnore
   private Set<ContestProblem> contestProblemSet = new HashSet<>();
 
-
-//  Todo:
-//  @JsonIgnore
-//  private Set<ContestProblem> contestProblemSet = new HashSet<>();
-
   public void setPassword(String password) {
     BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
     this.password = encoder.encode(password);

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.lamgnoah.hustoj.dto.ContestDTO;
 import com.lamgnoah.hustoj.dto.PageDTO;
 import com.lamgnoah.hustoj.dto.ProblemDTO;
+import com.lamgnoah.hustoj.dto.RankingDTO;
 import com.lamgnoah.hustoj.dto.RankingUserDTO;
 import com.lamgnoah.hustoj.exception.AppException;
 import com.lamgnoah.hustoj.query.ContestProblemQuery;
@@ -39,6 +40,7 @@ public class ContestRestController {
   }
 
   @GetMapping(value = "/{id}/admin")
+  @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
   public ContestDTO adminGetContestDetail(@PathVariable Long id) throws AppException {
     return contestService.adminFindById(id);
   }
@@ -53,6 +55,7 @@ public class ContestRestController {
   }
 
   @GetMapping("/admin")
+  @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
   public PageDTO<ContestDTO> adminGetContests(
       ContestQuery contestQuery,
       @RequestParam(value = "page", defaultValue = "0") Integer page,
@@ -105,6 +108,16 @@ public class ContestRestController {
       @RequestParam(value = "size", defaultValue = "10") Integer size)
       throws AppException, JsonProcessingException {
     return contestService.findAllProblems(id , page , size , contestProblemQuery);
+  }
+
+  @GetMapping("/{id}/problems/admin")
+  @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+  public PageDTO<ProblemDTO> adminGetProblems(@PathVariable Long id,
+      ContestProblemQuery contestProblemQuery,
+      @RequestParam(value = "page", defaultValue = "0") Integer page,
+      @RequestParam(value = "size", defaultValue = "10") Integer size)
+      throws AppException, JsonProcessingException {
+    return contestService.adminFindAllProblems(id , page , size , contestProblemQuery);
   }
 
   @PostMapping("/{id}/problem/create")
@@ -168,6 +181,11 @@ public class ContestRestController {
   public List<RankingUserDTO> addUsers(
       @RequestBody List<Long> userIdList, @PathVariable Long id) throws AppException {
     return contestService.addUsers(userIdList, id);
+  }
+
+  @GetMapping("/{id}/ranking")
+  public RankingDTO getRanking(@PathVariable Long id) throws AppException {
+    return contestService.getRanking(id);
   }
 
 

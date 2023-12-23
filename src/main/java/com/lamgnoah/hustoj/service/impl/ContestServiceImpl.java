@@ -13,6 +13,7 @@ import com.lamgnoah.hustoj.domain.enums.ErrorCode;
 import com.lamgnoah.hustoj.dto.ContestDTO;
 import com.lamgnoah.hustoj.dto.PageDTO;
 import com.lamgnoah.hustoj.dto.ProblemDTO;
+import com.lamgnoah.hustoj.dto.RankingDTO;
 import com.lamgnoah.hustoj.dto.RankingUserDTO;
 import com.lamgnoah.hustoj.entity.Contest;
 import com.lamgnoah.hustoj.entity.ContestProblem;
@@ -41,15 +42,20 @@ import jakarta.persistence.criteria.Predicate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.json.JSONObject;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ZSetOperations.TypedTuple;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -69,6 +75,7 @@ public class ContestServiceImpl implements ContestService {
   private final RankingUserMapper rankingUserMapper;
   private final UserRepository userRepository;
   private final ObjectMapper objectMapper;
+  private final RedisTemplate<String,String> redisTemplate;
 
   @Override
   public ContestDTO create(ContestDTO contestDTO) {
@@ -216,7 +223,7 @@ public class ContestServiceImpl implements ContestService {
   @Override
   public PageDTO<ContestDTO> findCriteria(Integer page, Integer size, ContestQuery contestQuery) {
     User user = UserContext.getCurrentUser();
-    Pageable pageable = PageRequest.of(page, size, Sort.Direction.DESC, "startDate");
+    Pageable pageable = PageRequest.of(page, size, Direction.DESC, "startDate");
     Specification<Contest> cs = (root, criteriaQuery, criteriaBuilder) -> {
       List<Predicate> predicateList = new ArrayList<>();
 
@@ -554,7 +561,7 @@ public class ContestServiceImpl implements ContestService {
   public PageDTO<ContestDTO> adminGetContests(Integer page, Integer size,
       ContestQuery contestQuery) {
     User user = UserContext.getCurrentUser();
-    Pageable pageable = PageRequest.of(page, size, Sort.Direction.DESC, "startDate");
+    Pageable pageable = PageRequest.of(page, size, Direction.DESC, "startDate");
     Specification<Contest> cs = (root, criteriaQuery, criteriaBuilder) -> {
       List<Predicate> predicateList = new ArrayList<>();
       String name = contestQuery.getName();
@@ -598,6 +605,60 @@ public class ContestServiceImpl implements ContestService {
       throw new AppException(ErrorCode.OBJECT_NOT_CREATED_BY_USER);
     }
     return contestMapper.entityToDTO(contest);
+  }
+
+  @Override
+  public RankingDTO getRanking(Long contestId) {
+    Optional<Contest> contestOptional = contestRepository.findById(contestId);
+    if (contestOptional.isEmpty()) {
+      throw new AppException(ErrorCode.NO_SUCH_CONTEST);
+    }
+    Contest contest = contestOptional.get();
+    RankingDTO rankingDTO = new RankingDTO();
+    rankingDTO.setContestId(contest.getId());
+    rankingDTO.setContestName(contest.getName());
+    rankingDTO.setContestProblemList(contestProblemRepository.findByContest(contest).stream()
+        .map(contestProblemMapper::entityToDTO).collect(Collectors.toList()));
+    if (contest.getStatus() == ContestStatus.PROCESSING){
+      // get ranking from redis
+      Set<String> userIds = redisTemplate.opsForZSet().reverseRange("contest:" + contestId, 0, -1);
+      log.info("userIds: {}", userIds);
+      assert userIds != null;
+      List<String> rankingUserInfo = new ArrayList<>();
+      userIds.forEach((userID) -> {
+        Map<Object, Object> objectMap = redisTemplate.opsForHash()
+            .entries("contest:" + contestId + ":user:" + userID);
+        JSONObject data = new JSONObject();
+        JSONObject rankingUser = new JSONObject();
+        data.put("acceptCount", objectMap.get("acceptCount"));
+        data.put("submitCount", objectMap.get("submitCount"));
+        data.put("time", objectMap.get("time"));
+        data.put("submissionInfo", objectMap.get("submission_info"));
+        data.put("username" , objectMap.get("username"));
+        rankingUser.put(userID,data);
+        String json = rankingUser.toString();
+        rankingUserInfo.add(json);
+      });
+      rankingDTO.setRankingUserInfo(rankingUserInfo);
+    } else {
+//      get rank from db
+    }
+    return rankingDTO;
+  }
+
+  @Override
+  public PageDTO<ProblemDTO> adminFindAllProblems(Long id, Integer page, Integer size,
+      ContestProblemQuery contestProblemQuery) {
+    User user = UserContext.getCurrentUser();
+    Pageable pageable = PageRequest.of(page, size);
+
+    Contest contest = contestRepository.findById(id)
+        .orElseThrow(() -> new AppException(ErrorCode.NO_SUCH_CONTEST));
+
+    List<ContestProblem> contestProblemList = contestProblemRepository.adminFindByContestAndParam(
+        contest, contestProblemQuery, pageable);
+    List<ProblemDTO> problemDTOs = contestProblemMapper.toContestProblemDTOs(contestProblemList);
+    return new PageDTO<>(page, size, (long) problemDTOs.size(), problemDTOs);
   }
 
   private void addUserToRanking(Contest contest, User user) {

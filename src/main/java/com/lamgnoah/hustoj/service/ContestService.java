@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.lamgnoah.hustoj.dto.ContestDTO;
 import com.lamgnoah.hustoj.dto.PageDTO;
 import com.lamgnoah.hustoj.dto.ProblemDTO;
+import com.lamgnoah.hustoj.dto.RankingDTO;
 import com.lamgnoah.hustoj.dto.RankingUserDTO;
 import com.lamgnoah.hustoj.query.ContestProblemQuery;
 import com.lamgnoah.hustoj.query.ContestQuery;
@@ -51,4 +52,8 @@ public interface ContestService {
   PageDTO<ContestDTO> adminGetContests(Integer page, Integer size, ContestQuery contestQuery);
 
   ContestDTO adminFindById(Long id);
+
+  RankingDTO getRanking(Long id);
+
+  PageDTO<ProblemDTO> adminFindAllProblems(Long id, Integer page, Integer size, ContestProblemQuery contestProblemQuery);
 }
