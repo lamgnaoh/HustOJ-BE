@@ -1,6 +1,7 @@
 package com.lamgnoah.hustoj.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.lamgnoah.hustoj.dto.AddPublicProblemDTO;
 import com.lamgnoah.hustoj.dto.ContestDTO;
 import com.lamgnoah.hustoj.dto.PageDTO;
 import com.lamgnoah.hustoj.dto.ProblemDTO;
@@ -130,8 +131,9 @@ public class ContestRestController {
 
   @PostMapping("/{id}/problem/add")
   @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
-  public ProblemDTO addPublicProblemToContest(@PathVariable Long id , @RequestBody Long problemId) {
-    return contestService.addProblem(id, problemId);
+  public ProblemDTO addPublicProblemToContest(@PathVariable Long id , @RequestBody AddPublicProblemDTO addPublicProblemDTO)
+      throws JsonProcessingException {
+    return contestService.addProblem(id, addPublicProblemDTO);
   }
 
   @PutMapping("/{contestId}/problem/{problemId}")
@@ -184,7 +186,7 @@ public class ContestRestController {
   }
 
   @GetMapping("/{id}/ranking")
-  public RankingDTO getRanking(@PathVariable Long id) throws AppException {
+  public RankingDTO getRanking(@PathVariable Long id) throws AppException, JsonProcessingException {
     return contestService.getRanking(id);
   }
 

@@ -10,6 +10,7 @@ import com.lamgnoah.hustoj.domain.enums.ContestRuleType;
 import com.lamgnoah.hustoj.domain.enums.ContestStatus;
 import com.lamgnoah.hustoj.domain.enums.ContestType;
 import com.lamgnoah.hustoj.domain.enums.ErrorCode;
+import com.lamgnoah.hustoj.dto.AddPublicProblemDTO;
 import com.lamgnoah.hustoj.dto.ContestDTO;
 import com.lamgnoah.hustoj.dto.PageDTO;
 import com.lamgnoah.hustoj.dto.ProblemDTO;
@@ -347,7 +348,9 @@ public class ContestServiceImpl implements ContestService {
   }
 
   @Override
-  public ProblemDTO addProblem(Long contestId, Long problemId) {
+  public ProblemDTO addProblem(Long contestId, AddPublicProblemDTO dto) {
+    Long problemId = dto.getProblemId();
+    String problemCode = dto.getProblemCode();
     User user = UserContext.getCurrentUser();
     Contest contest = contestRepository.findById(contestId)
         .orElseThrow(() -> new AppException(ErrorCode.NO_SUCH_CONTEST));
@@ -369,6 +372,7 @@ public class ContestServiceImpl implements ContestService {
       throw new AppException(ErrorCode.PROBLEM_ALREADY_IN_CONTEST);
     }
     Problem newProblem = new Problem(problem);
+    newProblem.setProblemCode(problemCode);
     newProblem.setCreateInContest(true);
     problemRepository.save(newProblem);
     ContestProblem contestProblem = new ContestProblem();
@@ -608,40 +612,65 @@ public class ContestServiceImpl implements ContestService {
   }
 
   @Override
-  public RankingDTO getRanking(Long contestId) {
+  public RankingDTO getRanking(Long contestId) throws JsonProcessingException {
     Optional<Contest> contestOptional = contestRepository.findById(contestId);
     if (contestOptional.isEmpty()) {
       throw new AppException(ErrorCode.NO_SUCH_CONTEST);
     }
     Contest contest = contestOptional.get();
     RankingDTO rankingDTO = new RankingDTO();
-    rankingDTO.setContestId(contest.getId());
-    rankingDTO.setContestName(contest.getName());
-    rankingDTO.setContestProblemList(contestProblemRepository.findByContest(contest).stream()
-        .map(contestProblemMapper::entityToDTO).collect(Collectors.toList()));
     if (contest.getStatus() == ContestStatus.PROCESSING){
       // get ranking from redis
       Set<String> userIds = redisTemplate.opsForZSet().reverseRange("contest:" + contestId, 0, -1);
       log.info("userIds: {}", userIds);
       assert userIds != null;
-      List<String> rankingUserInfo = new ArrayList<>();
-      userIds.forEach((userID) -> {
-        Map<Object, Object> objectMap = redisTemplate.opsForHash()
-            .entries("contest:" + contestId + ":user:" + userID);
-        JSONObject data = new JSONObject();
-        JSONObject rankingUser = new JSONObject();
-        data.put("acceptCount", objectMap.get("acceptCount"));
-        data.put("submitCount", objectMap.get("submitCount"));
-        data.put("time", objectMap.get("time"));
-        data.put("submissionInfo", objectMap.get("submission_info"));
-        data.put("username" , objectMap.get("username"));
-        rankingUser.put(userID,data);
-        String json = rankingUser.toString();
-        rankingUserInfo.add(json);
-      });
-      rankingDTO.setRankingUserInfo(rankingUserInfo);
+      List<RankingUserDTO> rankingUserDtos = new ArrayList<>();
+      if (contest.getContestRuleType().equals(ContestRuleType.ACM)){
+        userIds.forEach((userID) -> {
+          Map<Object, Object> objectMap = redisTemplate.opsForHash()
+              .entries("contest:" + contestId + ":user:" + userID);
+          RankingUserDTO rankingUserDTO = new RankingUserDTO();
+          rankingUserDTO.setSubmitCount(Integer.parseInt((String) objectMap.get("submitCount")));
+          rankingUserDTO.setAcceptCount(Integer.parseInt((String) objectMap.get("acceptCount")));
+          rankingUserDTO.setTime(Long.parseLong((String) objectMap.get("time")));
+          rankingUserDTO.setSubmissionInfo(objectMap.get("submission_info").toString());
+          rankingUserDTO.setUserName(objectMap.get("username").toString());
+          rankingUserDtos.add(rankingUserDTO);
+        });
+      }
+      if (contest.getContestRuleType().equals(ContestRuleType.OI)){
+        userIds.forEach((userID) -> {
+          Map<Object, Object> objectMap = redisTemplate.opsForHash()
+              .entries("contest:" + contestId + ":user:" + userID);
+          RankingUserDTO rankingUserDTO = new RankingUserDTO();
+          rankingUserDTO.setScore(Integer.parseInt((String) objectMap.get("score")));
+          rankingUserDTO.setSubmissionInfo(objectMap.get("submission_info").toString());
+          rankingUserDTO.setUserName(objectMap.get("username").toString());
+          rankingUserDtos.add(rankingUserDTO);
+        });
+      }
+      rankingDTO.setRankingUserDTOs(rankingUserDtos);
     } else {
 //      get rank from db
+      if(contest.getContestRuleType().equals(ContestRuleType.ACM)){
+        List<RankingUser> rankingUserList = rankingUserRepository.findByContestOrderByAcceptCountDescTimeAsc(contest);
+        List<RankingUserDTO> dtos = new ArrayList<>();
+        for (RankingUser ru: rankingUserList){
+          RankingUserDTO rankingUserDTO = rankingUserMapper.entityToDTO(ru);
+          rankingUserDTO.setSubmissionInfo(objectMapper.writeValueAsString(ru.getSubmissionInfo()));
+          dtos.add(rankingUserDTO);
+        }
+        rankingDTO.setRankingUserDTOs(dtos);
+      } else {
+        List<RankingUser> rankingUserList = rankingUserRepository.findByContestOrderByScoreDesc(contest);
+        List<RankingUserDTO> dtos = new ArrayList<>();
+        for (RankingUser ru: rankingUserList){
+          RankingUserDTO rankingUserDTO = rankingUserMapper.entityToDTO(ru);
+          rankingUserDTO.setSubmissionInfo(objectMapper.writeValueAsString(ru.getSubmissionInfo()));
+          dtos.add(rankingUserDTO);
+        }
+        rankingDTO.setRankingUserDTOs(dtos);
+      }
     }
     return rankingDTO;
   }

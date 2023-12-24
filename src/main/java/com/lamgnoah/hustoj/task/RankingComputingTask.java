@@ -65,10 +65,19 @@ public class RankingComputingTask {
         }
       } else {
         for (RankingUser rankingUser : rankingUserList) {
-          Double score = rankingUser.getScore();
+          Integer score = rankingUser.getScore();
           redisTemplate.opsForZSet().add("contest:" + contest.getId(),
               String.valueOf(rankingUser.getUser().getId()),
               score);
+          redisTemplate.opsForHash()
+              .put("contest:" + contest.getId() + ":user:" + rankingUser.getUser().getId(),
+                  "score", String.valueOf(rankingUser.getScore()));
+          redisTemplate.opsForHash()
+              .put("contest:" + contest.getId() + ":user:" + rankingUser.getUser().getId(),
+                  "submission_info", objectMapper.writeValueAsString(rankingUser.getSubmissionInfo()));
+          redisTemplate.opsForHash()
+              .put("contest:" + contest.getId() + ":user:" + rankingUser.getUser().getId(),
+                  "username", rankingUser.getUser().getUsername());
         }
       }
     }

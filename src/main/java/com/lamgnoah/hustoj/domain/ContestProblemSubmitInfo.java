@@ -19,5 +19,5 @@ public class ContestProblemSubmitInfo {
   private Long acTime;
   private Integer errorNumber;
   private Boolean isFirstAc;
-  private Boolean score;
+  private Integer score;
 }

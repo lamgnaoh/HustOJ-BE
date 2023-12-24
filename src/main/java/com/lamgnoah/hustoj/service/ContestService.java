@@ -1,6 +1,7 @@
 package com.lamgnoah.hustoj.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.lamgnoah.hustoj.dto.AddPublicProblemDTO;
 import com.lamgnoah.hustoj.dto.ContestDTO;
 import com.lamgnoah.hustoj.dto.PageDTO;
 import com.lamgnoah.hustoj.dto.ProblemDTO;
@@ -30,7 +31,7 @@ public interface ContestService {
 
   ProblemDTO createContestProblem(Long id, ProblemDTO problemDTO) throws JsonProcessingException;
 
-  ProblemDTO addProblem(Long id, Long problemId);
+  ProblemDTO addProblem(Long id, AddPublicProblemDTO addPublicProblemDTO);
 
   ProblemDTO updateProblem(Long contestId, Long problemId , ProblemDTO problemDTO)
       throws JsonProcessingException;
@@ -53,7 +54,7 @@ public interface ContestService {
 
   ContestDTO adminFindById(Long id);
 
-  RankingDTO getRanking(Long id);
+  RankingDTO getRanking(Long id) throws JsonProcessingException;
 
   PageDTO<ProblemDTO> adminFindAllProblems(Long id, Integer page, Integer size, ContestProblemQuery contestProblemQuery);
 }

@@ -5,12 +5,5 @@ import lombok.Data;
 
 @Data
 public class RankingDTO {
-
-  private Long contestId;
-
-  private String contestName;
-
-  private List<ProblemDTO> contestProblemList;
-
-  private List<String> rankingUserInfo;
+  private List<RankingUserDTO> rankingUserDTOs;
 }

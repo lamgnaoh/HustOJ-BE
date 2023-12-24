@@ -1,9 +1,11 @@
 package com.lamgnoah.hustoj.domain.pojos;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.lamgnoah.hustoj.domain.enums.Result;
 import lombok.Data;
 
 @Data
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class JudgeResult {
   private Integer cpuTime;
   private Result result;

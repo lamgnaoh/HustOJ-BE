@@ -48,7 +48,7 @@ public class RankingUser extends BaseEntity {
   @Convert(converter = SubmissionInfoConverter.class)
   private Map<Long , ContestProblemSubmitInfo>  submissionInfo = new HashMap<>();
 
-  private Double score = 0.0;
+  private Integer score = 0;
 
   private Long time = 0L;
 
@@ -68,7 +68,7 @@ public class RankingUser extends BaseEntity {
     this.time += milliseconds;
   }
 
-  public void addScore(Double score) {
+  public void addScore(Integer score) {
     this.score += score;
   }
 

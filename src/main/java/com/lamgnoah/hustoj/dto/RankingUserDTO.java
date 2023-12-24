@@ -19,11 +19,12 @@ public class RankingUserDTO {
 
   private Long time;
 
-  private Double score;
+  private Integer score;
 
   private Boolean ranked;
 
   private Integer rankingNumber;
 
+  private String submissionInfo;
 }
 

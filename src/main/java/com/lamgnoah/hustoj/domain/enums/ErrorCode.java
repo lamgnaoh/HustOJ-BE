@@ -30,7 +30,7 @@ public enum ErrorCode {
   NOT_A_ZIP_FILE("022", "Not a zip file",HttpStatus.BAD_REQUEST),
   INVALID_TEST_DATA_FORMAT("023", "Test data input/output wrong format" ,HttpStatus.BAD_REQUEST),
   NO_SUCH_PROBLEM("024", "No such problem", HttpStatus.BAD_REQUEST ),
-  CONTEST_NOT_GOING("025", "Contest not started",  HttpStatus.BAD_REQUEST),
+  CONTEST_NOT_GOING("025", "Contest is not processing at the moment",  HttpStatus.BAD_REQUEST),
   CAN_ONLY_CHANGE_FROM_NOT_STARTED("026", "Contest can only changed when not started", HttpStatus.BAD_REQUEST),
   BAD_CONTEST_STATUS("027", "Bad contest status", HttpStatus.BAD_REQUEST),
   CONTEST_PROBLEM_EXISTS_CODE_ALREADY( "028", "Contest problem code already exists" , HttpStatus.BAD_REQUEST ),

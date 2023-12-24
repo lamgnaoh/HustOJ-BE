@@ -157,13 +157,43 @@ public class SubmissionServiceImpl implements SubmissionService {
       if (contest.getContestRuleType().equals(ContestRuleType.ACM)) {
         updateACMContestRank(rankingUser, submission, contestProblem);
       } else {
-        updateOIContestRank(rankingUser, submission, contestProblem);
+        updateOIContestRank(rankingUser, submission);
       }
     }
     return dto;
   }
 
-  private void updateOIContestRank(RankingUser rankingUser, Submission submission, ContestProblem contestProblem) {
+  private void updateOIContestRank(RankingUser rankingUser, Submission submission)
+      throws JsonProcessingException {
+    Map<Long, ContestProblemSubmitInfo> submissionInfo = rankingUser.getSubmissionInfo();
+    if (submissionInfo.get(submission.getProblem().getId()) == null) { // problem is not submit yet
+      rankingUser.increaseSubmitCount();
+      if (submission.getResult().equals(Result.ACCEPTED)) {
+        rankingUser.increaseAcceptCount();
+      }
+      ContestProblemSubmitInfo info = ContestProblemSubmitInfo.builder()
+          .score(0).build();
+      JudgeResult result = objectMapper.readValue(submission.getResultDetail(),
+          JudgeResult.class);
+      info.setScore(result.getScore());
+      rankingUser.addScore(result.getScore());
+      submissionInfo.put(submission.getProblem().getId(), info);
+    } else { // problem is submitted before
+      rankingUser.increaseSubmitCount();
+      if (submission.getResult().equals(Result.ACCEPTED)) {
+        rankingUser.increaseAcceptCount();
+      }
+      ContestProblemSubmitInfo info = submissionInfo.get(submission.getProblem().getId());
+      Integer lastScore = info.getScore(); // score previous submission
+      Integer currentScore = objectMapper.readValue(submission.getResultDetail(),
+          JudgeResult.class).getScore(); // score current submission
+      info.setScore(currentScore);
+      Integer totalScore = rankingUser.getScore();
+      rankingUser.setScore(totalScore - lastScore + currentScore);
+      submissionInfo.put(submission.getProblem().getId(), info); // update submission info in ranking user
+    }
+    rankingUser.setSubmissionInfo(submissionInfo);
+    rankingUserRepository.save(rankingUser);
   }
 
   @Override
@@ -211,6 +241,7 @@ public class SubmissionServiceImpl implements SubmissionService {
           .acTime(0L)
           .errorNumber(0)
           .isFirstAc(false).build();
+      rankingUser.increaseSubmitCount();
       if (Result.ACCEPTED.equals(submission.getResult())) { // submission is accepted
         rankingUser.increaseAcceptCount();
         info.setIsAc(true);
@@ -220,6 +251,10 @@ public class SubmissionServiceImpl implements SubmissionService {
         rankingUser.addTime(info.getAcTime());
         if (contestProblem.getAcceptCount() == 1) {
           info.setIsFirstAc(true);
+        }
+        else if (!Result.COMPILE_ERROR.equals(
+            submission.getResult())) { // submission is wrong answer , time limit or memory limit
+          info.setErrorNumber(info.getErrorNumber() + 1);
         }
       }
       submissionInfo.put(submission.getProblem().getId(), info);
@@ -240,7 +275,7 @@ public class SubmissionServiceImpl implements SubmissionService {
             info.setIsFirstAc(true);
           }
         } else if (!Result.COMPILE_ERROR.equals(
-            submission.getResult())) { // submission is wrong answer
+            submission.getResult())) { // submission is wrong answer , time limit or memory limit
           info.setErrorNumber(info.getErrorNumber() + 1);
         }
       }
@@ -508,7 +543,9 @@ public class SubmissionServiceImpl implements SubmissionService {
         result.setResult(Result.SYSTEM_ERROR);
       }
       result.setMessage(resBodyJson.get("data").textValue());
-      result.setScore(0);
+      if(problem.getRuleType().equals(ContestRuleType.OI)){
+        result.setScore(0);
+      }
       return result;
     }
     List<JudgeResponse> data = objectMapper.readValue(resBodyJson.get("data").toString(),

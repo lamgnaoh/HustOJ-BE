@@ -4,6 +4,7 @@ import com.lamgnoah.hustoj.entity.Contest;
 import com.lamgnoah.hustoj.entity.RankingUser;
 import com.lamgnoah.hustoj.entity.User;
 import com.lamgnoah.hustoj.query.RankingUserQuery;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import org.springframework.data.domain.Page;
@@ -33,4 +34,8 @@ public interface RankingUserRepository extends JpaRepository<RankingUser , Long>
   Page<RankingUser> findByContestAndParams(@Param("contest") Contest contest ,
       @Param("rankingUserQuery") RankingUserQuery rankingUserQuery , Pageable pageable);
 
+
+  List<RankingUser> findByContestOrderByAcceptCountDescTimeAsc(Contest contest);
+
+  List<RankingUser> findByContestOrderByScoreDesc(Contest contest);
 }

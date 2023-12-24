@@ -9,6 +9,7 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring")
 public interface RankingUserMapper {
 
+  @Mapping(target = "submissionInfo" , ignore = true)
   @Mapping(target = "userName", source = "user.username")
   @Mapping(target = "userId", source = "user.id")
   RankingUserDTO entityToDTO(RankingUser rankingUser);
