@@ -24,5 +24,7 @@ public class Comment extends BaseEntity {
     @JoinColumn(name = "problem_id")
     private Problem problem;
 
+    private Long parentCommentId;
+
     private String content;
 }

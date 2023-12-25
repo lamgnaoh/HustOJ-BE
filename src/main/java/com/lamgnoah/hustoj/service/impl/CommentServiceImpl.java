@@ -1,6 +1,7 @@
 package com.lamgnoah.hustoj.service.impl;
 
 import com.lamgnoah.hustoj.dto.CommentDTO;
+import com.lamgnoah.hustoj.dto.PageDTO;
 import com.lamgnoah.hustoj.entity.Comment;
 import com.lamgnoah.hustoj.entity.Problem;
 import com.lamgnoah.hustoj.entity.User;
@@ -16,6 +17,10 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 @Service
 @RequiredArgsConstructor
 public class CommentServiceImpl implements CommentService {
@@ -25,9 +30,18 @@ public class CommentServiceImpl implements CommentService {
     private final CommentMapper commentMapper;
 
     @Override
-    public Page<CommentDTO> pageComment(Long problemId, Pageable pageable) {
+    public PageDTO<CommentDTO> pageComment(Long problemId, Pageable pageable) {
         Page<Comment> pageComment = commentRepository.findCommentByProblemId(problemId, pageable);
-        return pageComment.map(commentMapper::entityToDTO);
+        Page<CommentDTO> pageCommentDto = pageComment.map(commentMapper::entityToDTO);
+        List<CommentDTO> listCommentDto = pageCommentDto.getContent();
+        Map<Long, List<CommentDTO>> mapCommentsByCommentParentId = listCommentDto
+                .stream()
+                .filter(dto -> dto.getParentCommentId() != null)
+                .collect(Collectors.groupingBy(CommentDTO::getParentCommentId));
+        List<CommentDTO> result = listCommentDto.stream().filter(dto -> dto.getParentCommentId() == null)
+                .peek(dto -> dto.setListSubComment(mapCommentsByCommentParentId.get(dto.getId())))
+                .collect(Collectors.toList());
+        return new PageDTO<>(pageable.getPageNumber(), pageable.getPageSize(), pageCommentDto.getTotalElements(), result);
     }
 
     @Override
@@ -40,6 +54,7 @@ public class CommentServiceImpl implements CommentService {
             Problem problem = problemRepository.findById(commentDTO.getProblemId()).orElseThrow();
             comment = new Comment();
             comment.setAuthor(user);
+            comment.setParentCommentId(commentDTO.getParentCommentId());
             comment.setProblem(problem);
         } else {
             comment = commentRepository.findById(commentDTO.getId()).orElseThrow();

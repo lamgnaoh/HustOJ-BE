@@ -1,10 +1,10 @@
 package com.lamgnoah.hustoj.controller;
 
 import com.lamgnoah.hustoj.dto.CommentDTO;
+import com.lamgnoah.hustoj.dto.PageDTO;
 import com.lamgnoah.hustoj.security.JwtUser;
 import com.lamgnoah.hustoj.service.CommentService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -20,9 +20,9 @@ public class CommentRestController {
     private final CommentService commentService;
 
     @GetMapping("/page")
-    public Page<CommentDTO> getPage(@RequestParam(defaultValue = "10") int size,
-                                    @RequestParam(defaultValue = "0") int page,
-                                    @RequestParam Long problemId) {
+    public PageDTO<CommentDTO> getPage(@RequestParam(defaultValue = "10") int size,
+                                       @RequestParam(defaultValue = "0") int page,
+                                       @RequestParam Long problemId) {
         Pageable pageable = PageRequest.of(page, size, Sort.Direction.DESC, "created_at");
         return commentService.pageComment(problemId, pageable);
     }
