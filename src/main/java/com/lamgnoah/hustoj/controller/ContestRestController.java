@@ -1,6 +1,7 @@
 package com.lamgnoah.hustoj.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.lamgnoah.hustoj.domain.enums.ErrorCode;
 import com.lamgnoah.hustoj.dto.AddPublicProblemDTO;
 import com.lamgnoah.hustoj.dto.ContestDTO;
 import com.lamgnoah.hustoj.dto.PageDTO;
@@ -12,6 +13,9 @@ import com.lamgnoah.hustoj.query.ContestProblemQuery;
 import com.lamgnoah.hustoj.query.ContestQuery;
 import com.lamgnoah.hustoj.query.RankingUserQuery;
 import com.lamgnoah.hustoj.service.ContestService;
+import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -117,7 +121,7 @@ public class ContestRestController {
       ContestProblemQuery contestProblemQuery,
       @RequestParam(value = "page", defaultValue = "0") Integer page,
       @RequestParam(value = "size", defaultValue = "10") Integer size)
-      throws AppException, JsonProcessingException {
+      throws AppException {
     return contestService.adminFindAllProblems(id , page , size , contestProblemQuery);
   }
 
@@ -131,8 +135,7 @@ public class ContestRestController {
 
   @PostMapping("/{id}/problem/add")
   @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
-  public ProblemDTO addPublicProblemToContest(@PathVariable Long id , @RequestBody AddPublicProblemDTO addPublicProblemDTO)
-      throws JsonProcessingException {
+  public ProblemDTO addPublicProblemToContest(@PathVariable Long id , @RequestBody AddPublicProblemDTO addPublicProblemDTO) {
     return contestService.addProblem(id, addPublicProblemDTO);
   }
 

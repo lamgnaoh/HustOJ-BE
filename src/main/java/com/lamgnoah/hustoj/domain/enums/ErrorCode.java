@@ -48,8 +48,11 @@ public enum ErrorCode {
   OBJECT_NOT_CREATED_BY_USER( "040","Object not created by user " ,HttpStatus.BAD_REQUEST ),
   NOT_PUBLIC_CONTEST_USER( "041", "Need to join to this contest by submit 1 problem" ,HttpStatus.BAD_REQUEST ),
   TEST_CASE_NOT_FOUND("042", "Test case not found " , HttpStatus.BAD_REQUEST),
-  CANNOT_DELETE_CONTEST_PROBLEM_HAS_SUBMISSION("043" , "Cannot delete problem as it has submission" , HttpStatus.BAD_REQUEST)
-  ;
+  CANNOT_DELETE_CONTEST_PROBLEM_HAS_SUBMISSION("043" , "Cannot delete problem as it has submission" , HttpStatus.BAD_REQUEST),
+  EXPORT_ERROR("044", "Export error ", HttpStatus.BAD_REQUEST),
+  NO_SUCH_ANNOUNCEMENT("045", "No such announcement",HttpStatus.BAD_REQUEST),
+  HAVE_SUCH_ANNOUNCEMENT("046"  , "Announcement already exists" , HttpStatus.BAD_REQUEST );
+
 
 
   private final String code;
