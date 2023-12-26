@@ -12,12 +12,12 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
             "from comment c " +
             "         inner join problem p on c.problem_id = p.id " +
             "         inner join user u on c.user_id = u.id " +
-            "where problem_id = 1 ",
+            "where problem_id = ?1 ",
             countQuery = "select count(*) " +
                     "from comment c " +
                     "         inner join problem p on c.problem_id = p.id " +
                     "         inner join user u on c.user_id = u.id " +
-                    "where problem_id = 1 ",
+                    "where problem_id = ?1 ",
             nativeQuery = true)
     Page<Comment> findCommentByProblemId(Long problemId, Pageable pageable);
 }
