@@ -54,7 +54,10 @@ public class CommentServiceImpl implements CommentService {
             Problem problem = problemRepository.findById(commentDTO.getProblemId()).orElseThrow();
             comment = new Comment();
             comment.setAuthor(user);
-            comment.setParentCommentId(commentDTO.getParentCommentId());
+            Long parentCommentId = commentDTO.getParentCommentId();
+            if (parentCommentId != -1) {
+                comment.setParentCommentId(parentCommentId);
+            }
             comment.setProblem(problem);
         } else {
             comment = commentRepository.findById(commentDTO.getId()).orElseThrow();
