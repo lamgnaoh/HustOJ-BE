@@ -2,6 +2,7 @@ package com.lamgnoah.hustoj.repository;
 
 import com.lamgnoah.hustoj.domain.enums.ContestStatus;
 import com.lamgnoah.hustoj.entity.Contest;
+import com.lamgnoah.hustoj.entity.User;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -12,4 +13,6 @@ public interface ContestRepository
   Optional<Contest> findByName(String name);
 
   List<Contest> findByStatus(ContestStatus contestStatus);
+
+  void deleteAllByAuthor(User user);
 }

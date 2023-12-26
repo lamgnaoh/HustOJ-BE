@@ -3,6 +3,7 @@ package com.lamgnoah.hustoj.repository;
 import com.lamgnoah.hustoj.entity.Contest;
 import com.lamgnoah.hustoj.entity.ContestProblem;
 import com.lamgnoah.hustoj.entity.Problem;
+import com.lamgnoah.hustoj.entity.User;
 import com.lamgnoah.hustoj.query.ContestProblemQuery;
 import java.util.List;
 import java.util.Optional;
@@ -68,4 +69,6 @@ public interface ContestProblemRepository extends JpaRepository<ContestProblem, 
           + "or (lower(p.title) like lower(concat('%', concat(:#{#contestProblemQuery.keyword},'%'))))))",
       nativeQuery = true)
   List<ContestProblem> adminFindByContestAndParam(Contest contest, ContestProblemQuery contestProblemQuery, Pageable pageable);
+
+  void deleteAllByProblemAuthor(User user);
 }

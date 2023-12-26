@@ -1,10 +1,12 @@
 package com.lamgnoah.hustoj.dto;
 
-import com.lamgnoah.hustoj.domain.enums.ProblemPermission;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.lamgnoah.hustoj.entity.Authority;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import java.time.LocalDateTime;
 import java.util.Collection;
+import java.util.List;
 import lombok.Data;
 
 @Data
@@ -28,7 +30,20 @@ public class UserDTO {
 
   private Boolean enabled;
 
-  private Collection<Authority> authorities;
+  private Long acCount ;
+
+  private Long submitCount;
+
+  private Double acRate;
+
+  private String name;
+
+  private Integer totalScore;
+
+  private List<Authority> authorities;
+
+  @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+7")
+  private LocalDateTime createDate;
 
   private String problemPermission;
 

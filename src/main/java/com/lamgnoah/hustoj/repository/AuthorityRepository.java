@@ -2,6 +2,7 @@ package com.lamgnoah.hustoj.repository;
 
 import com.lamgnoah.hustoj.domain.enums.AuthorityName;
 import com.lamgnoah.hustoj.entity.Authority;
+import com.lamgnoah.hustoj.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 

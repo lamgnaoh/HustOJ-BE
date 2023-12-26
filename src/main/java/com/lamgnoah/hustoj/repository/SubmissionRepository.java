@@ -30,4 +30,6 @@ public interface SubmissionRepository extends JpaRepository<Submission , Long> ,
   long countByContest(Contest contest);
 
   Optional<Submission> findByContestAndProblem(Contest contest, Problem problem);
+
+  void deleteAllByAuthor(User user);
 }
