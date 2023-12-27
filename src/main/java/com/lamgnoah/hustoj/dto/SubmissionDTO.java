@@ -1,12 +1,14 @@
 package com.lamgnoah.hustoj.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import jakarta.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import lombok.Data;
 
 @Data
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class SubmissionDTO implements Serializable {
 
   private static final long serialVersionUID = -1L;
@@ -36,5 +38,7 @@ public class SubmissionDTO implements Serializable {
   private Integer memory;
   private String result;
   private String resultDetail; // statistic_info
+  private Double memoryPercentile;
+  private Double durationPercentile;
 
 }

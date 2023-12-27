@@ -54,6 +54,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.aop.framework.AopContext;
 import org.springframework.beans.factory.annotation.Value;
@@ -296,7 +297,32 @@ public class SubmissionServiceImpl implements SubmissionService {
         && contest != null && Boolean.TRUE.equals(!submission.getIsPractice())) {
       requireContestUser(contest, rankingUserRepository.findByContestAndUser(contest, user));
     }
-    return submissionMapper.entityToDTO(submission);
+    SubmissionDTO dto = submissionMapper.entityToDTO(submission);
+    if (submission.getResult().equals(Result.ACCEPTED)){
+      Problem problem = submission.getProblem();
+      List<Submission> acceptedSubmission = submissionRepository.findByProblemAndResult(problem,
+          Result.ACCEPTED);
+      List<Integer> memoryList = acceptedSubmission.stream().map(Submission::getMemory).collect(
+          Collectors.toList());
+      List<Integer> durationList = acceptedSubmission.stream().map(Submission::getDuration).collect(
+          Collectors.toList());
+      Double memoryPercentitle = calculatePercentageDifferent(memoryList, submission.getMemory());
+      Double durationPercentitle = calculatePercentageDifferent(durationList, submission.getDuration());
+      dto.setMemoryPercentile(memoryPercentitle);
+      dto.setDurationPercentile(durationPercentitle);
+    }
+    return dto;
+  }
+
+  private Double calculatePercentageDifferent(List<Integer> numberList, Integer targetNumber) {
+    int count = 0;
+    for (Integer number : numberList) {
+      if (number < targetNumber) {
+        count++;
+      }
+    }
+    double percentile = (count * 1.0 / numberList.size()) * 100;
+    return 100 - percentile;
   }
 
   private void requireContestUser(Contest contest, Optional<RankingUser> rankingUserOptional) {
@@ -503,6 +529,7 @@ public class SubmissionServiceImpl implements SubmissionService {
         oiProblemStatus.getProblems().put(problem.getId(),
             OiProblemStatus.ProblemStatus.builder().id(problem.getId())
                 .status(submissionDTO.getResult()).score(judgeResult.getScore()).build());
+        user.addScore(0, judgeResult.getScore());
       } else { // problem already in oi_problem_status
         if (!oiProblemStatus.getProblems().get(problem.getId()).getStatus()
             .equals(Result.ACCEPTED.name())) {

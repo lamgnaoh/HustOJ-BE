@@ -28,6 +28,8 @@ public class JwtUser implements UserDetails {
 
   private final Long submitCount;
 
+  private final Integer totalScore;
+
   private final Double acRate;
 
   private final Boolean enabled;

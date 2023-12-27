@@ -45,8 +45,6 @@ public class Submission extends BaseEntity {
 
   private Integer memory;
 
-  private Integer length;
-
   private Integer duration;
 
   @Enumerated(EnumType.STRING)

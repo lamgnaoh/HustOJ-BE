@@ -74,7 +74,7 @@ public class User extends BaseEntity{
   private Double acRate = 0.0;
 
   @Column(name = "total_score")
-  private Integer totalScore;
+  private Integer totalScore = 0;
 
 //  example:
 /*

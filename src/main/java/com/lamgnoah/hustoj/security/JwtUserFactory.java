@@ -26,6 +26,7 @@ public class JwtUserFactory {
         user.getEmail(),
         user.getAcCount(),
         user.getSubmitCount(),
+        user.getTotalScore(),
         user.getAcRate(),
         user.getEnabled(),
         user.getLastPasswordResetDate(),

@@ -2,7 +2,6 @@ package com.lamgnoah.hustoj.service;
 
 import com.lamgnoah.hustoj.dto.PageDTO;
 import com.lamgnoah.hustoj.dto.UserDTO;
-import com.lamgnoah.hustoj.entity.User;
 import com.lamgnoah.hustoj.query.UserQuery;
 
 public interface UserService {

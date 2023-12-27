@@ -1,5 +1,6 @@
 package com.lamgnoah.hustoj.repository;
 
+import com.lamgnoah.hustoj.domain.enums.Result;
 import com.lamgnoah.hustoj.entity.Contest;
 import com.lamgnoah.hustoj.entity.Problem;
 import com.lamgnoah.hustoj.entity.Submission;
@@ -32,4 +33,6 @@ public interface SubmissionRepository extends JpaRepository<Submission , Long> ,
   Optional<Submission> findByContestAndProblem(Contest contest, Problem problem);
 
   void deleteAllByAuthor(User user);
+
+  List<Submission> findByProblemAndResult(Problem problem, Result result );
 }
