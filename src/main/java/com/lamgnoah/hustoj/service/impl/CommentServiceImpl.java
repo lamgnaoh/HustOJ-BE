@@ -33,14 +33,19 @@ public class CommentServiceImpl implements CommentService {
     public PageDTO<CommentDTO> pageComment(Long problemId, Pageable pageable) {
         Page<Comment> pageComment = commentRepository.findCommentByProblemId(problemId, pageable);
         Page<CommentDTO> pageCommentDto = pageComment.map(commentMapper::entityToDTO);
-        List<CommentDTO> listCommentDto = pageCommentDto.getContent();
-        Map<Long, List<CommentDTO>> mapCommentsByCommentParentId = listCommentDto
-                .stream()
-                .filter(dto -> dto.getParentCommentId() != null)
-                .collect(Collectors.groupingBy(CommentDTO::getParentCommentId));
-        List<CommentDTO> result = listCommentDto.stream().filter(dto -> dto.getParentCommentId() == null)
-                .peek(dto -> dto.setListSubComment(mapCommentsByCommentParentId.get(dto.getId())))
-                .collect(Collectors.toList());
+        List<Long> listParentCommentId = pageComment.getContent()
+            .stream()
+            .map(Comment::getId)
+            .collect(Collectors.toUnmodifiableList());
+        List<Comment> listComment = commentRepository.findByParentCommentIdIn(listParentCommentId);
+        Map<Long, List<CommentDTO>> mapCommentsByCommentParentId = listComment
+            .stream()
+            .map(commentMapper::entityToDTO)
+            .collect(Collectors.groupingBy(CommentDTO::getParentCommentId));
+        List<CommentDTO> result = pageCommentDto.getContent()
+            .stream()
+            .peek(dto -> dto.setListSubComment(mapCommentsByCommentParentId.get(dto.getId())))
+            .collect(Collectors.toList());
         return new PageDTO<>(pageable.getPageNumber(), pageable.getPageSize(), pageCommentDto.getTotalElements(), result);
     }
 
