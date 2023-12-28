@@ -1,0 +1,79 @@
+version: "3"
+services:
+  judger:
+    image: registry.cn-hangzhou.aliyuncs.com/onlinejudge/judge_server
+    container_name: hustoj-judger
+    read_only: true
+    cap_drop:
+      - SETPCAP
+      - MKNOD
+      - NET_BIND_SERVICE
+      - SYS_CHROOT
+      - SETFCAP
+      - FSETID
+    tmpfs:
+      - /tmp
+    volumes:
+      - ./backend/upload/problems:/test_case:ro
+      - ./judger/log:/log
+      # - $PWD/server:/code:ro
+      - ./judger/run:/judger
+    environment:
+      - BACKEND_URL=${BACKEND_URL}
+      - SERVICE_URL=${SERVICE_URL}
+      - TOKEN=${TOKEN}
+    ports:
+      - '${JUDGER_EXPOSE_PORT}:${JUDGER_DOCKER_PORT}'
+
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    restart: always
+    environment:
+      MYSQL_ROOT_USER: ${SPRING_DATASOURCE_USERNAME}
+      MYSQL_ROOT_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+    ports:
+      - '${MYSQL_EXPOSE_PORT}:${MYSQL_DOCKER_PORT}'
+    volumes:
+      - './mysql/db:/var/lib/mysql'
+      - './mysql/conf:/etc/mysql/conf.d'
+      - './init/mysql:/docker-entrypoint-initdb.d'
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    command:
+      - /bin/sh
+      - -c
+      # - Double dollars, so that the variable is not expanded by Docker Compose
+      # - Surround by quotes, so that the shell does not split the password
+      # - The ${variable:?message} syntax causes shell to exit with a non-zero
+      #   code and print a message, when the variable is not set or empty
+      - redis-server --requirepass "$${REDIS_PASSWORD:?REDIS_PASSWORD variable is not set}"
+    env_file:
+      - .env
+    ports:
+      - "${REDIS_EXPOSE_PORT}:${REDIS_DOCKER_PORT}"
+    volumes:
+      - "./redis/data:/data"
+
+  backend:
+    container_name: hustoj-backend
+    build: ./
+    environment:
+      - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL}
+      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
+      - UPLOAD_PATH=/var/lib/upload
+      - SPRING_REDIS_HOST=${REDIS_HOST}
+      - SPRING_REDIS_PORT=${REDIS_EXPOSE_PORT}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - JWT_SECRET=${JWT_SECRET}
+      - JUDGER_TOKEN=${JUDGER_TOKEN}
+      - JUDGER_URL=${JUDGER_URL}
+    ports:
+      - '${SPRING_EXPOSE_PORT}:${SPRING_DOCKER_PORT}'
+    volumes:
+      - ./backend/upload:/var/lib/upload

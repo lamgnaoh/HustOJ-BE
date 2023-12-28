@@ -2,35 +2,37 @@ server:
   port: 8081
 spring:
   datasource:
-    url: ${SPRING_DATASOURCE_URL}
-    username: ${SPRING_DATASOURCE_USERNAME}
-    password: ${SPRING_DATASOURCE_PASSWORD}
+    url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_EXPOSE_PORT:3307}/${MYSQL_DATABASE:hustoj}?useSSL=false&allowPublicKeyRetrieval=true
+    username: ${SPRING_DATASOURCE_USERNAME:root}
+    password: ${SPRING_DATASOURCE_PASSWORD:123456}
+  flyway:
+    enabled: true
+    user: ${spring.datasource.username}
+    password: ${spring.datasource.password}
+    url: ${spring.datasource.url}
+    locations: config/db
   jpa:
-    hibernate:
-      ddl-auto: update
-
     show-sql: false
-
     properties:
       hibernate:
         format_sql: true
   data:
     redis:
-      host: ${SPRING_REDIS_HOST}
+      host: ${REDIS_HOST:localhost}
       database: 0
-      port: ${SPRING_REDIS_PORT}
-      password: ${REDIS_PASSWORD}
+      port: ${REDIS_EXPOSE_PORT:6379}
+      password: ${REDIS_PASSWORD:passredis}
       timeout: 1000
 
 upload:
-  path: ${UPLOAD_PATH}
+  path: ${UPLOAD_PATH:./deploy/backend/upload}
 judger:
-  token: ${JUDGER_TOKEN}
-  url: ${JUDGER_URL}
+  token: ${JUDGER_TOKEN:50f155d68905eb9fc33a23dd821204167eba0fdaf8197abbf75f8edf60ccae98}
+  url: ${JUDGER_URL:http://localhost:8083}
 
 jwt:
   expiration: 604800
-  secret: ${JWT_SECRET}
+  secret: ${JWT_SECRET:my-32-character-ultra-secure-and-ultra-long-secret}
   header: Authorization
   route:
     authentication:
