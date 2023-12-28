@@ -2,9 +2,9 @@ server:
   port: 8081
 spring:
   datasource:
-    url: jdbc:mysql://localhost:3306/hustoj?useSSL=false&allowPublicKeyRetrieval=true
-    username: lamhoang
-    password: 12345678
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
   jpa:
     hibernate:
       ddl-auto: update
@@ -16,21 +16,21 @@ spring:
         format_sql: true
   data:
     redis:
-      host: localhost
+      host: ${SPRING_REDIS_HOST}
       database: 0
-      port: 6379
-      password: passredis
+      port: ${SPRING_REDIS_PORT}
+      password: ${REDIS_PASSWORD}
       timeout: 1000
 
 upload:
-  path: ./deploy/backend/upload
+  path: ${UPLOAD_PATH}
 judger:
-  token: 50f155d68905eb9fc33a23dd821204167eba0fdaf8197abbf75f8edf60ccae98
-  url: http://0.0.0.0:12358
+  token: ${JUDGER_TOKEN}
+  url: ${JUDGER_URL}
 
 jwt:
   expiration: 604800
-  secret: my-32-character-ultra-secure-and-ultra-long-secret
+  secret: ${JWT_SECRET}
   header: Authorization
   route:
     authentication:
