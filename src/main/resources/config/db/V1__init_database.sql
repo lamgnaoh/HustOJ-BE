@@ -246,6 +246,12 @@ create index UK_kpj6s1hrhhdneorsopcb9mgwr
     on problem (problem_code);
 
 INSERT INTO hustoj.problem (id, created_at, updated_at, accept_count, accept_rate, description, difficulty, hint, input_description, output_description, problem_code, ram_limit, sampleio, special_judged, submit_count, time_limit, title, visible, author_id, create_in_contest, test_case_score, total_score, test_case_id, rule_type)
-VALUES (1, '2023-12-01 18:12:34.986828', '2023-12-27 21:39:53.621239', 0, 0, '<p>Hãy tính tổng của hai số nguyên và in kết quả. Hãy cẩn thận để không có output không cần thiết, chẳng hạn như "Vui lòng nhập giá trị của a và b: ",<br></p>', 'LOW', '', '<p><span style="color: rgb(200, 195, 188);">Hai số nguyên cách nhau bởi dấu cách</span><br></p>', '<p>Tổng của 2 số</p>', 'HUST01', 256, '[{"input":"1 1","output":"2"},{"input":"2 3 ","output":"5"}]', false, 13, 1000, 'Simple A+B Problem', true, 1, false, '[{"input_name":"1.in","input_size":3,"output_name":"1.out","output_size":1,"score":"33","stripped_output_md5":"eccbc87e4b5ce2fe28308fd9f2a7baf3"},{"input_name":"2.in","input_size":3,"output_name":"2.out","output_size":1,"score":"33","stripped_output_md5":"e4da3b7fbbce2345d7772b0674a318d5"},{"input_name":"3.in","input_size":3,"output_name":"3.out","output_size":1,"score":"33","stripped_output_md5":"8f14e45fceea167a5a36dedd4bea2543"}]', 0, '98091d45-dda1-4409-a684-5bdef4bcdc79', 'ACM');
+VALUES (1, '2023-12-01 18:12:34.986828', '2023-12-27 21:39:53.621239', 0, 0, '<p>Hãy tính tổng của hai số nguyên và in kết quả. Hãy cẩn thận để không có output không cần thiết, chẳng hạn như "Vui lòng nhập giá trị của a và b: ",<br></p>', 'LOW', '', '<p><span style="color: rgb(200, 195, 188);">Hai số nguyên cách nhau bởi dấu cách</span><br></p>', '<p>Tổng của 2 số</p>', 'HUST01', 256, '[{"input":"1 1","output":"2"},{"input":"2 3 ","output":"5"}]', false, 0, 1000, 'Simple A+B Problem', true, 1, false, '[{"input_name":"1.in","input_size":3,"output_name":"1.out","output_size":1,"score":"33","stripped_output_md5":"eccbc87e4b5ce2fe28308fd9f2a7baf3"},{"input_name":"2.in","input_size":3,"output_name":"2.out","output_size":1,"score":"33","stripped_output_md5":"e4da3b7fbbce2345d7772b0674a318d5"},{"input_name":"3.in","input_size":3,"output_name":"3.out","output_size":1,"score":"33","stripped_output_md5":"8f14e45fceea167a5a36dedd4bea2543"}]', 0, '98091d45-dda1-4409-a684-5bdef4bcdc79', 'ACM');
+
+INSERT INTO hustoj.tag (id, created_at, updated_at, name, problem_count)
+VALUES (1, '2023-12-01 18:12:34.951060', '2023-12-27 01:41:25.106822', 'sum', 1);
+
+INSERT INTO hustoj.problem_tag (problem_id, tag_id) VALUES (1, 1);
+
 
 
