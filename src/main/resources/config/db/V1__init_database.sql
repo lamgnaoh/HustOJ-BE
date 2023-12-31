@@ -164,8 +164,6 @@ create table hustoj.ranking_user
     created_at      datetime(6) null,
     updated_at      datetime(6) null,
     accept_count    int null,
-    ranked          bit null,
-    ranking_number  int null,
     score           int null,
     submission_info json default (_utf8mb4'{}') null,
     submit_count    int null,

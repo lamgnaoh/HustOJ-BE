@@ -52,10 +52,6 @@ public class RankingUser extends BaseEntity {
 
   private Long time = 0L;
 
-  private Boolean ranked = true;
-
-  private Integer rankingNumber;
-
   public void increaseAcceptCount() {
     this.acceptCount++;
   }
