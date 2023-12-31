@@ -15,4 +15,5 @@ FROM eclipse-temurin:17-jdk-alpine
 ARG TARGET=/usr/app/target
 COPY --from=build $TARGET /app
 EXPOSE 8080
+RUN echo "Asia/Ho_Chi_Minh" > /etc/timezone
 ENTRYPOINT java -jar /app/*.jar

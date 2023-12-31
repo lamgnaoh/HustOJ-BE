@@ -40,4 +40,6 @@ public interface RankingUserRepository extends JpaRepository<RankingUser , Long>
   List<RankingUser> findByContestOrderByScoreDesc(Contest contest);
 
   void deleteAllByUser(User user);
+
+  void deleteByContestAndUserId(Contest contest, Long userId);
 }

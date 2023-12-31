@@ -4,6 +4,10 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 .env
+init/
+judger/
+mysql/
+redis/
 
 ### STS ###
 .apt_generated

@@ -63,6 +63,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations.TypedTuple;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -105,7 +106,7 @@ public class ContestServiceImpl implements ContestService {
 
     requirePassword(contest);
 
-    contest.setCreateDate(LocalDateTime.now());
+//    contest.setCreateDate(LocalDateTime.now());
     contest.setAuthor(user);
     return contestMapper.entityToDTO(contestRepository.save(contest));
   }
@@ -164,6 +165,7 @@ public class ContestServiceImpl implements ContestService {
   }
 
   @Override
+  @Transactional
   public void delete(Long id) {
     User user = UserContext.getCurrentUser();
     Contest contest = contestRepository.findById(id)
@@ -536,12 +538,15 @@ public class ContestServiceImpl implements ContestService {
   }
 
   @Override
+  @Transactional
   public void deleteUsers(List<Long> userIdList, Long contetsId) {
-    contestRepository.findById(contetsId)
+    Contest contest = contestRepository.findById(contetsId)
         .orElseThrow(() -> new AppException(ErrorCode.NO_SUCH_CONTEST));
-    List<RankingUser> rankingUserList = rankingUserRepository.findAllById(userIdList);
-    rankingUserRepository.deleteAll(rankingUserList);
-
+    for (Long userId: userIdList){
+      rankingUserRepository.deleteByContestAndUserId(contest, userId);
+    }
+//    List<RankingUser> rankingUserList = rankingUserRepository.findAllByUserId(userIdList);
+//    rankingUserRepository.deleteAll(rankingUserList);
   }
 
   @Override

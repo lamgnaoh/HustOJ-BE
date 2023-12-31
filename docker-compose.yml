@@ -25,21 +25,22 @@ services:
     ports:
       - '${JUDGER_EXPOSE_PORT}:${JUDGER_DOCKER_PORT}'
 
-  mysql:
-    image: mysql:8.0
-    container_name: mysql
-    command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
-    restart: always
-    environment:
-      MYSQL_ROOT_USER: ${SPRING_DATASOURCE_USERNAME}
-      MYSQL_ROOT_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-    ports:
-      - '${MYSQL_EXPOSE_PORT}:${MYSQL_DOCKER_PORT}'
-    volumes:
-      - './mysql/db:/var/lib/mysql'
-      - './mysql/conf:/etc/mysql/conf.d'
-      - './init/mysql:/docker-entrypoint-initdb.d'
+#  mysql:
+#    image: mysql:8.0
+#    container_name: mysql
+#    command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+#    restart: always
+#    environment:
+#      MYSQL_ROOT_USER: ${SPRING_DATASOURCE_USERNAME}
+#      MYSQL_ROOT_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+#      MYSQL_DATABASE: ${MYSQL_DATABASE}
+#      TZ: Asia/Ho_Chi_Minh
+#    ports:
+#      - '${MYSQL_EXPOSE_PORT}:${MYSQL_DOCKER_PORT}'
+#    volumes:
+#      - './mysql/db:/var/lib/mysql'
+#      - './mysql/conf:/etc/mysql/conf.d'
+#      - './init/mysql:/docker-entrypoint-initdb.d'
 
   redis:
     image: redis:latest
@@ -59,21 +60,21 @@ services:
     volumes:
       - "./redis/data:/data"
 
-  backend:
-    container_name: hustoj-backend
-    build: ./
-    environment:
-      - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL}
-      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
-      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
-      - UPLOAD_PATH=/var/lib/upload
-      - SPRING_REDIS_HOST=${REDIS_HOST}
-      - SPRING_REDIS_PORT=${REDIS_EXPOSE_PORT}
-      - REDIS_PASSWORD=${REDIS_PASSWORD}
-      - JWT_SECRET=${JWT_SECRET}
-      - JUDGER_TOKEN=${JUDGER_TOKEN}
-      - JUDGER_URL=${JUDGER_URL}
-    ports:
-      - '${SPRING_EXPOSE_PORT}:${SPRING_DOCKER_PORT}'
-    volumes:
-      - ./backend/upload:/var/lib/upload
+#  backend:
+#    container_name: hustoj-backend
+#    build: ./
+#    environment:
+#      - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL}
+#      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
+#      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
+#      - UPLOAD_PATH=/var/lib/upload
+#      - SPRING_REDIS_HOST=${REDIS_HOST}
+#      - SPRING_REDIS_PORT=${REDIS_EXPOSE_PORT}
+#      - REDIS_PASSWORD=${REDIS_PASSWORD}
+#      - JWT_SECRET=${JWT_SECRET}
+#      - JUDGER_TOKEN=${JUDGER_TOKEN}
+#      - JUDGER_URL=${JUDGER_URL}
+#    ports:
+#      - '${SPRING_EXPOSE_PORT}:${SPRING_DOCKER_PORT}'
+#    volumes:
+#      - ./backend/upload:/var/lib/upload

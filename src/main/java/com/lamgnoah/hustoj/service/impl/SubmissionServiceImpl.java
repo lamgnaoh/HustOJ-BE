@@ -118,7 +118,7 @@ public class SubmissionServiceImpl implements SubmissionService {
   }
 
   @Override
-  @Transactional
+//  @Transactional
   public SubmissionDTO createContestSubmission(SubmissionDTO submissionDTO)
       throws JsonProcessingException {
     User user = UserContext.getCurrentUser();
@@ -126,13 +126,19 @@ public class SubmissionServiceImpl implements SubmissionService {
     submission.setAuthor(user);
     Contest contest = contestRepository.findById(submissionDTO.getContestId())
         .orElseThrow(() -> new AppException(ErrorCode.NO_SUCH_CONTEST));
-    Optional<RankingUser> rankingUserOptional = rankingUserRepository.findByContestAndUser(contest,
-        user);
-    if (contest.getContestType().equals(ContestType.PUBLIC) && rankingUserOptional.isEmpty()) {
+    if (contest.getContestType().equals(ContestType.PUBLIC)
+        && rankingUserRepository.findByContestAndUser(contest, user).isEmpty()) {
 //       user not submit any problem to become contest competitor
-      RankingUser rankingUser = RankingUser.builder().contest(contest).user(user).build();
+      RankingUser rankingUser = RankingUser.builder().contest(contest).user(user).acceptCount(0)
+          .time(0L)
+          .score(0)
+          .submitCount(0)
+
+          .submissionInfo(new HashMap<>()).build();
       rankingUserRepository.save(rankingUser); // create ranking user
     }
+    Optional<RankingUser> rankingUserOptional = rankingUserRepository.findByContestAndUser(contest,
+        user);
     if (!user.isAdmin()) {
       requireContestUser(contest, rankingUserOptional);
       requireContestOnGoing(contest);
@@ -147,9 +153,7 @@ public class SubmissionServiceImpl implements SubmissionService {
     submission.setResult(judgeResult.getResult());
     submission.setResultDetail(objectMapper.writeValueAsString(judgeResult));
     submission.setMemory(judgeResult.getMemory());
-    SubmissionDTO dto = submissionMapper.entityToDTO(submissionRepository.save(submission));
-    SubmissionService submissionService = (SubmissionService) AopContext.currentProxy();
-    submissionService.counter(dto);
+    submission = submissionRepository.save(submission);
 
     if (rankingUserOptional.isPresent()) {
       RankingUser rankingUser = rankingUserOptional.get();
@@ -161,6 +165,9 @@ public class SubmissionServiceImpl implements SubmissionService {
         updateOIContestRank(rankingUser, submission);
       }
     }
+    SubmissionDTO dto = submissionMapper.entityToDTO(submission);
+    SubmissionService submissionService = (SubmissionService) AopContext.currentProxy();
+    submissionService.counter(dto);
     return dto;
   }
 
@@ -253,10 +260,9 @@ public class SubmissionServiceImpl implements SubmissionService {
         if (contestProblem.getAcceptCount() == 1) {
           info.setIsFirstAc(true);
         }
-        else if (!Result.COMPILE_ERROR.equals(
-            submission.getResult())) { // submission is wrong answer , time limit or memory limit
-          info.setErrorNumber(info.getErrorNumber() + 1);
-        }
+      } else if (!Result.COMPILE_ERROR.equals(
+          submission.getResult())) { // submission is wrong answer , time limit or memory limit
+        info.setErrorNumber(info.getErrorNumber() + 1);
       }
       submissionInfo.put(submission.getProblem().getId(), info);
     } else {
@@ -308,8 +314,10 @@ public class SubmissionServiceImpl implements SubmissionService {
           Collectors.toList());
       Double memoryPercentitle = calculatePercentageDifferent(memoryList, submission.getMemory());
       Double durationPercentitle = calculatePercentageDifferent(durationList, submission.getDuration());
-      dto.setMemoryPercentile(memoryPercentitle);
-      dto.setDurationPercentile(durationPercentitle);
+      if (dto.getContestId() == null){
+        dto.setMemoryPercentile(memoryPercentitle);
+        dto.setDurationPercentile(durationPercentitle);
+      }
     }
     return dto;
   }
@@ -414,41 +422,11 @@ public class SubmissionServiceImpl implements SubmissionService {
     Problem problem = problemRepository.findById(submissionDTO.getProblemId())
         .orElseThrow(() -> new AppException(ErrorCode.NO_SUCH_PROBLEM));
 
-    userStatCounter(submissionDTO, user, problem);
-    problemStatCounter(submissionDTO, problem);
+    statCounter(submissionDTO, user, problem);
   }
 
-
-  private void problemStatCounter(SubmissionDTO submissionDTO, Problem problem) {
-    if (submissionDTO.getContestId() != null) {
-      Contest contest = contestRepository.findById(submissionDTO.getContestId())
-          .orElseThrow(() -> new AppException(ErrorCode.NO_SUCH_CONTEST));
-      ContestProblem contestProblem = contestProblemRepository.findByContestAndProblem(contest,
-          problem).orElseThrow(() -> new AppException(ErrorCode.NO_SUCH_PROBLEM_IN_CONTEST));
-      contestProblem.setSubmitCount(contestProblem.getSubmitCount() + 1);
-      if (Result.ACCEPTED.equals(Result.valueOf(submissionDTO.getResult()))) {
-        contestProblem.setAcceptCount(contestProblem.getAcceptCount() + 1);
-      }
-      contestProblem.setAcceptRate(
-          contestProblem.getAcceptCount() * 1.0 / contestProblem.getSubmitCount());
-      contestProblemRepository.save(contestProblem);
-    } else {
-      problem.setSubmitCount(problem.getSubmitCount() + 1);
-      if (Result.ACCEPTED.equals(Result.valueOf(submissionDTO.getResult()))) {
-        problem.setAcceptCount(problem.getAcceptCount() + 1);
-      }
-      problem.setAcceptRate(problem.getAcceptCount() * 1.0 / problem.getSubmitCount());
-      problemRepository.save(problem);
-    }
-  }
-
-  private void userStatCounter(SubmissionDTO submissionDTO, User user, Problem problem)
+  private void statCounter(SubmissionDTO submissionDTO, User user, Problem problem)
       throws JsonProcessingException {
-    user.setSubmitCount(user.getSubmitCount() + 1);
-    if (Result.ACCEPTED.equals(Result.valueOf(submissionDTO.getResult()))) {
-      user.setAcCount(user.getAcCount() + 1);
-    }
-    user.setAcRate(user.getAcCount() * 1.0 / user.getSubmitCount());
     if (submissionDTO.getContestId() == null) {
       updateProblemStatus(submissionDTO, user, problem);
     } else {
@@ -461,21 +439,34 @@ public class SubmissionServiceImpl implements SubmissionService {
       throws JsonProcessingException {
     Contest contest = contestRepository.findById(submissionDTO.getContestId())
         .orElseThrow(() -> new AppException(ErrorCode.NO_SUCH_CONTEST));
+    ContestProblem contestProblem = contestProblemRepository.findByContestAndProblem(contest,
+        problem).orElseThrow(() -> new AppException(ErrorCode.NO_SUCH_PROBLEM_IN_CONTEST));
     if (contest.getContestRuleType().equals(ContestRuleType.ACM)) {
       String acmProblemStatusJson = user.getAcmProblemsStatus();
       AcmProblemStatus acmProblemStatus = objectMapper.readValue(acmProblemStatusJson,
           AcmProblemStatus.class);
-      if (!acmProblemStatus.getContestProblem().containsKey(problem.getId())) {
+      if (!acmProblemStatus.getContestProblem().containsKey(problem.getId())) { // if user not submit this contest problem before
         acmProblemStatus.getContestProblem().put(problem.getId(),
             AcmProblemStatus.ContestProblemStatus.builder().id(problem.getId())
                 .status(submissionDTO.getResult()).build());
-      } else { // if contest problem already exist
+        contestProblem.setSubmitCount(contestProblem.getSubmitCount() + 1);
+        if (Result.ACCEPTED.equals(Result.valueOf(submissionDTO.getResult()))) {
+          contestProblem.setAcceptCount(contestProblem.getAcceptCount() + 1);
+        }
+        contestProblem.setAcceptRate(
+            contestProblem.getAcceptCount() * 1.0 / contestProblem.getSubmitCount());
+      } else { // if user submit this contest problem before
         ContestProblemStatus contestProblemStatus = acmProblemStatus.getContestProblem()
             .get(problem.getId());
-        if (!contestProblemStatus.getStatus()
-            .equals(Result.ACCEPTED.name())) { // if previous submit is not accepted
+        if (!contestProblemStatus.getStatus().equals(Result.ACCEPTED.name())) { // if previous submit is not accepted
           contestProblemStatus.setStatus(submissionDTO.getResult());
           acmProblemStatus.getContestProblem().put(problem.getId(), contestProblemStatus);
+          contestProblem.setSubmitCount(contestProblem.getSubmitCount() + 1);
+          if (Result.ACCEPTED.equals(Result.valueOf(submissionDTO.getResult()))) {
+            contestProblem.setAcceptCount(contestProblem.getAcceptCount() + 1);
+          }
+          contestProblem.setAcceptRate(
+              contestProblem.getAcceptCount() * 1.0 / contestProblem.getSubmitCount());
         }
       }
       user.setAcmProblemsStatus(objectMapper.writeValueAsString(acmProblemStatus));
@@ -486,35 +477,59 @@ public class SubmissionServiceImpl implements SubmissionService {
           });
       String detail = submissionDTO.getResultDetail();
       JudgeResult judgeResult = objectMapper.readValue(detail, JudgeResult.class);
-      if (!oiProblemStatus.getContestProblem().containsKey(problem.getId())) {
+      if (!oiProblemStatus.getContestProblem().containsKey(problem.getId())) { // if user not submit this contest problem before
         oiProblemStatus.getContestProblem().put(problem.getId(),
             OiProblemStatus.ContestProblemStatus.builder().id(problem.getId())
                 .status(submissionDTO.getResult()).score(judgeResult.getScore()).build());
-      } else {
+        contestProblem.setSubmitCount(contestProblem.getSubmitCount() + 1);
+        if (Result.ACCEPTED.equals(Result.valueOf(submissionDTO.getResult()))) {
+          contestProblem.setAcceptCount(contestProblem.getAcceptCount() + 1);
+        }
+        contestProblem.setAcceptRate(contestProblem.getAcceptCount() * 1.0 / contestProblem.getSubmitCount());
+      } else { // if user submit this contest problem before
         oiProblemStatus.getContestProblem().get(problem.getId()).setScore(judgeResult.getScore());
         oiProblemStatus.getContestProblem().get(problem.getId())
             .setStatus(submissionDTO.getResult());
+        if (!oiProblemStatus.getContestProblem().get(problem.getId()).getStatus().equals(Result.ACCEPTED.name())){
+          contestProblem.setSubmitCount(contestProblem.getSubmitCount() + 1);
+          if (Result.ACCEPTED.equals(Result.valueOf(submissionDTO.getResult()))) {
+            contestProblem.setAcceptCount(contestProblem.getAcceptCount() + 1);
+          }
+          contestProblem.setAcceptRate(
+              contestProblem.getAcceptCount() * 1.0 / contestProblem.getSubmitCount());
+        }
       }
       user.setOiProblemsStatus(objectMapper.writeValueAsString(oiProblemStatus));
     }
+    contestProblemRepository.save(contestProblem);
   }
 
   private void updateProblemStatus(SubmissionDTO submissionDTO, User user, Problem problem)
       throws JsonProcessingException {
+    problem.setSubmitCount(problem.getSubmitCount() + 1);
+    if (submissionDTO.getResult().equals(Result.ACCEPTED.name())) {
+      problem.setAcceptCount(problem.getAcceptCount() + 1);
+    }
+    user.setSubmitCount(user.getSubmitCount() + 1);
     if (problem.getRuleType().equals(ContestRuleType.ACM)) {
       String acmProblemStatusJson = user.getAcmProblemsStatus();
       AcmProblemStatus acmProblemStatus = objectMapper.readValue(acmProblemStatusJson,
           AcmProblemStatus.class);
-      if (!acmProblemStatus.getProblems().containsKey(problem.getId())) {
+      if (!acmProblemStatus.getProblems().containsKey(problem.getId())) { // if user not submit this problem before
         acmProblemStatus.getProblems().put(problem.getId(),
             AcmProblemStatus.ProblemStatus.builder().id(problem.getId())
                 .status(submissionDTO.getResult()).build());
+        if (submissionDTO.getResult().equals(Result.ACCEPTED.name())) {
+          user.setAcCount(user.getAcCount() + 1);
+        }
       } else {
-        ProblemStatus problemStatus = acmProblemStatus.getProblems().get(problem.getId());
-        if (!problemStatus.getStatus()
-            .equals(Result.ACCEPTED.name())) { // if previous submit is not accepted
+        ProblemStatus problemStatus = acmProblemStatus.getProblems().get(problem.getId()); // if user submit this problem before
+        if (!problemStatus.getStatus().equals(Result.ACCEPTED.name())) { // if previous submit is not accepted
           problemStatus.setStatus(submissionDTO.getResult());
           acmProblemStatus.getProblems().put(problem.getId(), problemStatus);
+          if (submissionDTO.getResult().equals(Result.ACCEPTED.name())) {
+            user.setAcCount(user.getAcCount() + 1);
+          }
         }
       }
       user.setAcmProblemsStatus(objectMapper.writeValueAsString(acmProblemStatus));
@@ -523,24 +538,30 @@ public class SubmissionServiceImpl implements SubmissionService {
       OiProblemStatus oiProblemStatus = objectMapper.readValue(oiProblemStatusJson,
           new TypeReference<>() {
           });
-      if (!oiProblemStatus.getProblems().containsKey(problem.getId())) {
+      if (!oiProblemStatus.getProblems().containsKey(problem.getId())) { //if user not submit this problem before
         String detail = submissionDTO.getResultDetail();
         JudgeResult judgeResult = objectMapper.readValue(detail, JudgeResult.class);
         oiProblemStatus.getProblems().put(problem.getId(),
             OiProblemStatus.ProblemStatus.builder().id(problem.getId())
                 .status(submissionDTO.getResult()).score(judgeResult.getScore()).build());
         user.addScore(0, judgeResult.getScore());
-      } else { // problem already in oi_problem_status
-        if (!oiProblemStatus.getProblems().get(problem.getId()).getStatus()
-            .equals(Result.ACCEPTED.name())) {
+        if (submissionDTO.getResult().equals(Result.ACCEPTED.name())) {
+          user.setAcCount(user.getAcCount() + 1);
+        }
+      } else { // user submit this problem before
+        if (!oiProblemStatus.getProblems().get(problem.getId()).getStatus().equals(Result.ACCEPTED.name())) { // user submission previous is not accepted
           Integer lastTimeScore = oiProblemStatus.getProblems().get(problem.getId()).getScore();
           Integer thisTimeScore = objectMapper.readValue(submissionDTO.getResultDetail(),
               JudgeResult.class).getScore();
           user.addScore(lastTimeScore, thisTimeScore);
+          if (submissionDTO.getResult().equals(Result.ACCEPTED.name())) {
+            user.setAcCount(user.getAcCount() + 1);
+          }
         }
       }
       user.setOiProblemsStatus(objectMapper.writeValueAsString(oiProblemStatus));
     }
+    problemRepository.save(problem);
   }
 
 
