@@ -510,6 +510,7 @@ public class SubmissionServiceImpl implements SubmissionService {
     if (submissionDTO.getResult().equals(Result.ACCEPTED.name())) {
       problem.setAcceptCount(problem.getAcceptCount() + 1);
     }
+    problem.setAcceptRate(problem.getAcceptCount() * 1.0 / problem.getSubmitCount());
     user.setSubmitCount(user.getSubmitCount() + 1);
     if (problem.getRuleType().equals(ContestRuleType.ACM)) {
       String acmProblemStatusJson = user.getAcmProblemsStatus();
