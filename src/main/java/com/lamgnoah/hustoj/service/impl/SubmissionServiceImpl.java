@@ -154,6 +154,9 @@ public class SubmissionServiceImpl implements SubmissionService {
     submission.setResultDetail(objectMapper.writeValueAsString(judgeResult));
     submission.setMemory(judgeResult.getMemory());
     submission = submissionRepository.save(submission);
+    SubmissionDTO dto = submissionMapper.entityToDTO(submission);
+    SubmissionService submissionService = (SubmissionService) AopContext.currentProxy();
+    submissionService.counter(dto);
 
     if (rankingUserOptional.isPresent()) {
       RankingUser rankingUser = rankingUserOptional.get();
@@ -165,9 +168,6 @@ public class SubmissionServiceImpl implements SubmissionService {
         updateOIContestRank(rankingUser, submission);
       }
     }
-    SubmissionDTO dto = submissionMapper.entityToDTO(submission);
-    SubmissionService submissionService = (SubmissionService) AopContext.currentProxy();
-    submissionService.counter(dto);
     return dto;
   }
 
@@ -562,6 +562,7 @@ public class SubmissionServiceImpl implements SubmissionService {
       }
       user.setOiProblemsStatus(objectMapper.writeValueAsString(oiProblemStatus));
     }
+    user.setAcRate(user.getAcCount() * 1.0 / user.getSubmitCount());
     problemRepository.save(problem);
   }
 

@@ -722,12 +722,12 @@ public class ContestServiceImpl implements ContestService {
           throw new AppException(ErrorCode.CAN_ONLY_CHANGE_FROM_NOT_STARTED);
         }
         contest.setStatus(ContestStatus.PROCESSING);
-        contest.setStartDate(LocalDateTime.now());
+//        contest.setStartDate(LocalDateTime.now());
         contestRepository.save(contest);
         break;
       case ENDED:
         contest.setStatus(ContestStatus.ENDED);
-        contest.setEndDate(LocalDateTime.now());
+//        contest.setEndDate(LocalDateTime.now());
         break;
       default:
         throw new AppException(ErrorCode.BAD_CONTEST_STATUS);

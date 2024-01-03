@@ -66,13 +66,13 @@ public class SubmissionRestController {
     return submissionService.findByPracticeProblem(id);
   }
   @GetMapping(value = "/contests/{contestId}/problems/{problemId}/submissions")
-  public List<SubmissionDTO> getContestSubmissions(
+  public List<SubmissionDTO> getContestProblemSubmissions(
       @PathVariable Long contestId, @PathVariable Long problemId) throws AppException {
     return submissionService.findByContestProblem(contestId, problemId);
   }
 
   @GetMapping(value = "/contests/{id}/submissions")
-  public PageDTO<SubmissionDTO> getSubmissions(
+  public PageDTO<SubmissionDTO> getAllContestSubmissions(
       @PathVariable Long id,
       @RequestParam(defaultValue = "0") Integer page,
       @RequestParam(defaultValue = "10") Integer size)
