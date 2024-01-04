@@ -3,38 +3,31 @@ package com.lamgnoah.hustoj.service.impl;
 import com.lamgnoah.hustoj.domain.enums.AuthorityName;
 import com.lamgnoah.hustoj.domain.enums.ErrorCode;
 import com.lamgnoah.hustoj.domain.enums.ProblemPermission;
+import com.lamgnoah.hustoj.dto.ChangePasswordDTO;
 import com.lamgnoah.hustoj.dto.PageDTO;
 import com.lamgnoah.hustoj.dto.UserDTO;
 import com.lamgnoah.hustoj.entity.Authority;
-import com.lamgnoah.hustoj.entity.Problem;
-import com.lamgnoah.hustoj.entity.Submission;
 import com.lamgnoah.hustoj.entity.User;
 import com.lamgnoah.hustoj.exception.AppException;
 import com.lamgnoah.hustoj.mapper.UserMapper;
 import com.lamgnoah.hustoj.query.UserQuery;
-import com.lamgnoah.hustoj.repository.ContestProblemRepository;
-import com.lamgnoah.hustoj.repository.ContestRepository;
-import com.lamgnoah.hustoj.repository.ProblemRepository;
-import com.lamgnoah.hustoj.repository.RankingUserRepository;
-import com.lamgnoah.hustoj.repository.SubmissionRepository;
-import com.lamgnoah.hustoj.repository.UserRepository;
-import com.lamgnoah.hustoj.repository.AuthorityRepository;
-import com.lamgnoah.hustoj.security.JwtUser;
-import com.lamgnoah.hustoj.security.JwtUserFactory;
+import com.lamgnoah.hustoj.repository.*;
 import com.lamgnoah.hustoj.service.UserService;
 import com.lamgnoah.hustoj.utils.CommonUtil;
 import jakarta.persistence.criteria.Predicate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -189,7 +182,7 @@ public class UserServiceImpl implements UserService {
   @Transactional
   public void delete(Long id) {
     User user = userRepository.findById(id)
-        .orElseThrow(() -> new AppException(ErrorCode.NO_SUCH_USER));
+            .orElseThrow(() -> new AppException(ErrorCode.NO_SUCH_USER));
 //    delete entity relate to user
     contestProblemRepository.deleteAllByProblemAuthor(user);
     contestRepository.deleteAllByAuthor(user);
@@ -197,5 +190,16 @@ public class UserServiceImpl implements UserService {
     submissionRepository.deleteAllByAuthor(user);
     rankingUserRepository.deleteAllByUser(user);
     userRepository.delete(user);
+  }
+
+  @Override
+  public Boolean changePassword(Long userId, ChangePasswordDTO changePasswordDTO) {
+    User user = userRepository.findById(userId).orElseThrow(() -> new AppException(ErrorCode.NO_SUCH_USER));
+    if (!BCrypt.checkpw(changePasswordDTO.getOldPassword(), user.getPassword())) {
+      return false;
+    }
+    user.setPassword(changePasswordDTO.getNewPassword());
+    userRepository.save(user);
+    return true;
   }
 }

@@ -1,5 +1,6 @@
 package com.lamgnoah.hustoj.service;
 
+import com.lamgnoah.hustoj.dto.ChangePasswordDTO;
 import com.lamgnoah.hustoj.dto.PageDTO;
 import com.lamgnoah.hustoj.dto.UserDTO;
 import com.lamgnoah.hustoj.query.UserQuery;
@@ -15,4 +16,6 @@ public interface UserService {
   UserDTO update(UserDTO userDTO);
 
   void delete(Long id);
+
+  Boolean changePassword(Long userId, ChangePasswordDTO newPassword);
 }
