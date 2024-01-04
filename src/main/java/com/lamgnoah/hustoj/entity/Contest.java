@@ -13,6 +13,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -76,6 +77,13 @@ public class Contest extends BaseEntity {
   @OneToMany(mappedBy = "contest")
   @JsonIgnore
   private Set<ContestProblem> contestProblemSet = new HashSet<>();
+
+  @OneToMany(
+      mappedBy = "contest",
+      fetch = FetchType.LAZY)
+  @Fetch(FetchMode.SUBSELECT)
+  @JsonIgnore
+  private Set<RankingUser> rankingUserList = new HashSet<>();
 
   public void setPassword(String password) {
     BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();

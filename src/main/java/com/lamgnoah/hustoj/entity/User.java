@@ -122,19 +122,19 @@ public class User extends BaseEntity{
   @OneToMany(mappedBy = "author", fetch = FetchType.LAZY)
   @Fetch(FetchMode.SUBSELECT)
   @JsonIgnore
-  @Transient
+//  @Transient
   private List<Problem> problemList;
 
   @OneToMany(mappedBy = "author", fetch = FetchType.LAZY)
   @Fetch(FetchMode.SUBSELECT)
   @JsonIgnore
-  @Transient
+//  @Transient
   private List<Contest> contestList;
 
   @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
   @Fetch(FetchMode.SUBSELECT)
   @JsonIgnore
-  @Transient
+//  @Transient
   private List<RankingUser> rankingUserList;
 
   @Column(name = "problem_permission")

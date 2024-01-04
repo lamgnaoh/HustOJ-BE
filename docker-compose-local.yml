@@ -81,3 +81,6 @@ services:
       - '${SPRING_EXPOSE_PORT}:${SPRING_DOCKER_PORT}'
     volumes:
       - ./backend/upload:/var/lib/upload
+    depends_on:
+      - mysql
+      - redis

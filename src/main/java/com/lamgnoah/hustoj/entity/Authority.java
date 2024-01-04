@@ -41,6 +41,6 @@ public class Authority{
 
   @ManyToMany(mappedBy = "authorities")
   @JsonIgnore
-  @Transient
+//  @Transient
   private List<User> userList;
 }

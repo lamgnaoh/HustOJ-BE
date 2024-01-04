@@ -37,7 +37,7 @@ public class RankingUser extends BaseEntity {
   private User user;
   @ManyToOne
   @JoinColumn(name = "contest_id")
-  @NotFound(action = NotFoundAction.IGNORE)
+//  @NotFound(action = NotFoundAction.IGNORE)
   private Contest contest;
 
   private Integer acceptCount = 0;
