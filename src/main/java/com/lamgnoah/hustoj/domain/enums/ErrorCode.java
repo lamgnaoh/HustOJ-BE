@@ -51,7 +51,8 @@ public enum ErrorCode {
   CANNOT_DELETE_CONTEST_PROBLEM_HAS_SUBMISSION("043" , "Cannot delete problem as it has submission" , HttpStatus.BAD_REQUEST),
   EXPORT_ERROR("044", "Export error ", HttpStatus.BAD_REQUEST),
   NO_SUCH_ANNOUNCEMENT("045", "No such announcement",HttpStatus.BAD_REQUEST),
-  HAVE_SUCH_ANNOUNCEMENT("046"  , "Announcement already exists" , HttpStatus.BAD_REQUEST );
+  HAVE_SUCH_ANNOUNCEMENT("046", "Announcement already exists", HttpStatus.BAD_REQUEST),
+  ISSUE_NOTFOUND("047", "Issue not found", HttpStatus.NOT_FOUND);
 
 
 
