@@ -1,11 +1,12 @@
 package com.lamgnoah.hustoj.service;
 
+import com.lamgnoah.hustoj.domain.enums.IssueStatus;
 import com.lamgnoah.hustoj.dto.IssueDto;
-import com.lamgnoah.hustoj.dto.PageDTO;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 public interface IssueService {
-    PageDTO<IssueDto> page(Long problemId, Pageable pageable);
+    Page<IssueDto> page(IssueStatus status, Pageable pageable);
 
     IssueDto detail(Long id);
 

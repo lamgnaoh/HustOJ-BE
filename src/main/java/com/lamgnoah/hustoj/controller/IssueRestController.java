@@ -1,10 +1,11 @@
 package com.lamgnoah.hustoj.controller;
 
+import com.lamgnoah.hustoj.domain.enums.IssueStatus;
 import com.lamgnoah.hustoj.dto.IssueDto;
-import com.lamgnoah.hustoj.dto.PageDTO;
 import com.lamgnoah.hustoj.security.JwtUser;
 import com.lamgnoah.hustoj.service.IssueService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -20,11 +21,11 @@ public class IssueRestController {
     private final IssueService issueService;
 
     @GetMapping("/page")
-    public PageDTO<IssueDto> getPage(@RequestParam(defaultValue = "10") int size,
-                                     @RequestParam(defaultValue = "0") int page,
-                                     @RequestParam Long problemId) {
-        Pageable pageable = PageRequest.of(page, size, Sort.Direction.DESC, "created_at");
-        return issueService.page(problemId, pageable);
+    public Page<IssueDto> getPage(@RequestParam(defaultValue = "10") int size,
+                                  @RequestParam(defaultValue = "0") int page,
+                                  @RequestParam(required = false) IssueStatus status) {
+        Pageable pageable = PageRequest.of(page, size, Sort.Direction.DESC, "createDate");
+        return issueService.page(status, pageable);
     }
 
 
