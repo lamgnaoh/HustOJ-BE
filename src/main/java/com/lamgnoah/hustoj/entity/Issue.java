@@ -17,10 +17,10 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class Issue extends BaseEntity {
-    private String name;
-    private String description;
+  private String name;
+  private String description;
   @Enumerated(EnumType.STRING)
-    private IssueStatus status;
+  private IssueStatus status;
   private Long authorId;
   private Long problemId;
 }

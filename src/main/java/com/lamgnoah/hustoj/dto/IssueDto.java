@@ -8,15 +8,15 @@ import java.time.LocalDateTime;
 
 @Data
 public class IssueDto {
-    private Long id;
-    private String name;
-    private String description;
+  private Long id;
+  private String name;
+  private String description;
   private IssueStatus status;
   private LocalDateTime createDate;
   private LocalDateTime modifiedDate;
   private Long authorId;
   private String authorName;
-    private Long problemId;
+  private Long problemId;
   private String problemTitle;
 
   public static IssueDto fromEntity(Issue issue) {
