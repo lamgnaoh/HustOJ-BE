@@ -421,7 +421,7 @@ public class SubmissionServiceImpl implements SubmissionService {
 
   private void updateContestProblemStatus(SubmissionDTO submissionDTO, User user, Problem problem)
       throws JsonProcessingException {
-    Contest contest = contestRepository.findById(1l)
+    Contest contest = contestRepository.findById(submissionDTO.getContestId())
         .orElseThrow(() -> new AppException(ErrorCode.NO_SUCH_CONTEST));
     ContestProblem contestProblem = contestProblemRepository.findByContestAndProblem(contest,
         problem).orElseThrow(() -> new AppException(ErrorCode.NO_SUCH_PROBLEM_IN_CONTEST));
