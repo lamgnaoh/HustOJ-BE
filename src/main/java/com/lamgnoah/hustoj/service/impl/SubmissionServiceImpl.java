@@ -1,60 +1,32 @@
 package com.lamgnoah.hustoj.service.impl;
 
-import static com.lamgnoah.hustoj.domain.enums.Result.COMPILE_ERROR;
-import static com.lamgnoah.hustoj.domain.enums.Result.JUDGE_CLIENT_ERROR;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.lamgnoah.hustoj.domain.AcmProblemStatus;
+import com.lamgnoah.hustoj.domain.AcmProblemStatus.ContestProblemStatus;
+import com.lamgnoah.hustoj.domain.AcmProblemStatus.ProblemStatus;
 import com.lamgnoah.hustoj.domain.ContestProblemSubmitInfo;
+import com.lamgnoah.hustoj.domain.OiProblemStatus;
 import com.lamgnoah.hustoj.domain.UserContext;
-import com.lamgnoah.hustoj.domain.enums.ContestRuleType;
-import com.lamgnoah.hustoj.domain.enums.ContestStatus;
-import com.lamgnoah.hustoj.domain.enums.ContestType;
-import com.lamgnoah.hustoj.domain.enums.Language;
-import com.lamgnoah.hustoj.domain.enums.Result;
+import com.lamgnoah.hustoj.domain.enums.*;
 import com.lamgnoah.hustoj.domain.pojos.JudgeResponse;
 import com.lamgnoah.hustoj.domain.pojos.JudgeResult;
 import com.lamgnoah.hustoj.dto.PageDTO;
 import com.lamgnoah.hustoj.dto.SubmissionDTO;
 import com.lamgnoah.hustoj.dto.TestcaseInfoDTO;
-import com.lamgnoah.hustoj.domain.AcmProblemStatus;
-import com.lamgnoah.hustoj.domain.AcmProblemStatus.ContestProblemStatus;
-import com.lamgnoah.hustoj.domain.AcmProblemStatus.ProblemStatus;
-import com.lamgnoah.hustoj.entity.Contest;
-import com.lamgnoah.hustoj.entity.ContestProblem;
-import com.lamgnoah.hustoj.domain.OiProblemStatus;
-import com.lamgnoah.hustoj.entity.Problem;
-import com.lamgnoah.hustoj.entity.RankingUser;
-import com.lamgnoah.hustoj.entity.Submission;
-import com.lamgnoah.hustoj.domain.enums.ErrorCode;
-import com.lamgnoah.hustoj.entity.User;
+import com.lamgnoah.hustoj.entity.*;
 import com.lamgnoah.hustoj.exception.AppException;
 import com.lamgnoah.hustoj.judgeConfig.LanguageConfig;
 import com.lamgnoah.hustoj.mapper.SubmissionMapper;
 import com.lamgnoah.hustoj.query.SubmissionQuery;
-import com.lamgnoah.hustoj.repository.ContestProblemRepository;
-import com.lamgnoah.hustoj.repository.ContestRepository;
-import com.lamgnoah.hustoj.repository.ProblemRepository;
-import com.lamgnoah.hustoj.repository.RankingUserRepository;
-import com.lamgnoah.hustoj.repository.SubmissionRepository;
-import com.lamgnoah.hustoj.repository.UserRepository;
+import com.lamgnoah.hustoj.repository.*;
 import com.lamgnoah.hustoj.service.SubmissionService;
 import com.lamgnoah.hustoj.utils.CommonUtil;
 import com.lamgnoah.hustoj.utils.HttpUtil;
 import jakarta.annotation.PostConstruct;
 import jakarta.persistence.criteria.Predicate;
-import java.io.IOException;
-import java.time.Duration;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.aop.framework.AopContext;
 import org.springframework.beans.factory.annotation.Value;
@@ -62,10 +34,21 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.retry.annotation.EnableRetry;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import static com.lamgnoah.hustoj.domain.enums.Result.COMPILE_ERROR;
+
 @Service
+@EnableRetry
 @RequiredArgsConstructor
 public class SubmissionServiceImpl implements SubmissionService {
 
@@ -425,6 +408,7 @@ public class SubmissionServiceImpl implements SubmissionService {
     statCounter(submissionDTO, user, problem);
   }
 
+  @Retryable
   private void statCounter(SubmissionDTO submissionDTO, User user, Problem problem)
       throws JsonProcessingException {
     if (submissionDTO.getContestId() == null) {
@@ -437,7 +421,7 @@ public class SubmissionServiceImpl implements SubmissionService {
 
   private void updateContestProblemStatus(SubmissionDTO submissionDTO, User user, Problem problem)
       throws JsonProcessingException {
-    Contest contest = contestRepository.findById(submissionDTO.getContestId())
+    Contest contest = contestRepository.findById(1l)
         .orElseThrow(() -> new AppException(ErrorCode.NO_SUCH_CONTEST));
     ContestProblem contestProblem = contestProblemRepository.findByContestAndProblem(contest,
         problem).orElseThrow(() -> new AppException(ErrorCode.NO_SUCH_PROBLEM_IN_CONTEST));

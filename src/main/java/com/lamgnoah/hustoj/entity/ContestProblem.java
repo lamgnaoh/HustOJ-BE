@@ -1,10 +1,6 @@
 package com.lamgnoah.hustoj.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -34,5 +30,8 @@ public class ContestProblem extends BaseEntity{
 
   @Column(name = "visible")
   private Boolean visible = true;
+
+  @Version
+  private Long version;
 
 }
