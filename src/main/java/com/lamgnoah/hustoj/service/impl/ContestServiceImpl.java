@@ -630,11 +630,11 @@ public class ContestServiceImpl implements ContestService {
     RankingDTO rankingDTO = new RankingDTO();
     if (contest.getStatus() == ContestStatus.PROCESSING){
       // get ranking from redis
-      Set<String> userIds = redisTemplate.opsForZSet().reverseRange("contest:" + contestId, 0, -1);
-      log.info("userIds: {}", userIds);
-      assert userIds != null;
       List<RankingUserDTO> rankingUserDtos = new ArrayList<>();
       if (contest.getContestRuleType().equals(ContestRuleType.ACM)){
+        Set<String> userIds = redisTemplate.opsForZSet().range("contest:" + contestId, 0, -1);
+        log.info("userIds: {}", userIds);
+        assert userIds != null;
         userIds.forEach((userID) -> {
           Map<Object, Object> objectMap = redisTemplate.opsForHash()
               .entries("contest:" + contestId + ":user:" + userID);
@@ -648,6 +648,9 @@ public class ContestServiceImpl implements ContestService {
         });
       }
       if (contest.getContestRuleType().equals(ContestRuleType.OI)){
+        Set<String> userIds = redisTemplate.opsForZSet().reverseRange("contest:" + contestId, 0, -1);
+        log.info("userIds: {}", userIds);
+        assert userIds != null;
         userIds.forEach((userID) -> {
           Map<Object, Object> objectMap = redisTemplate.opsForHash()
               .entries("contest:" + contestId + ":user:" + userID);
