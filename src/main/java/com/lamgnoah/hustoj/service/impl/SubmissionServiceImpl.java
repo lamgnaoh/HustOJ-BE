@@ -34,7 +34,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.retry.annotation.EnableRetry;
+import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -48,7 +48,6 @@ import java.util.stream.Collectors;
 import static com.lamgnoah.hustoj.domain.enums.Result.COMPILE_ERROR;
 
 @Service
-@EnableRetry
 @RequiredArgsConstructor
 public class SubmissionServiceImpl implements SubmissionService {
 
@@ -73,6 +72,7 @@ public class SubmissionServiceImpl implements SubmissionService {
 
   @Override
   @Transactional
+  @Retryable(maxAttempts = 3, backoff = @Backoff(delay = 1000))
   public SubmissionDTO createPracticeSubmission(SubmissionDTO submissionDTO)
       throws JsonProcessingException {
     User user = UserContext.getCurrentUser();
@@ -101,7 +101,8 @@ public class SubmissionServiceImpl implements SubmissionService {
   }
 
   @Override
-//  @Transactional
+  @Transactional
+  @Retryable(maxAttempts = 3, backoff = @Backoff(delay = 1000))
   public SubmissionDTO createContestSubmission(SubmissionDTO submissionDTO)
       throws JsonProcessingException {
     User user = UserContext.getCurrentUser();
@@ -408,7 +409,6 @@ public class SubmissionServiceImpl implements SubmissionService {
     statCounter(submissionDTO, user, problem);
   }
 
-  @Retryable
   private void statCounter(SubmissionDTO submissionDTO, User user, Problem problem)
       throws JsonProcessingException {
     if (submissionDTO.getContestId() == null) {
