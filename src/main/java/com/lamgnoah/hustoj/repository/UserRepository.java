@@ -4,6 +4,9 @@ import com.lamgnoah.hustoj.entity.User;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.transaction.annotation.Transactional;
 
 public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificationExecutor<User> {
   Optional<User> findUserByUsername(String username);
@@ -17,4 +20,10 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
 
 
   boolean existsByEmailAndIdIsNot(String email, Long id);
+
+  @Transactional
+  @Modifying
+  @Query("UPDATE User a " +
+      "SET a.enabled = TRUE WHERE a.email = ?1")
+  int enableUser(String email);
 }

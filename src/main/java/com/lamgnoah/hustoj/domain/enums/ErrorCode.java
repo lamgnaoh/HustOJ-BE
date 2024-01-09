@@ -52,7 +52,10 @@ public enum ErrorCode {
   EXPORT_ERROR("044", "Export error ", HttpStatus.BAD_REQUEST),
   NO_SUCH_ANNOUNCEMENT("045", "No such announcement",HttpStatus.BAD_REQUEST),
   HAVE_SUCH_ANNOUNCEMENT("046", "Announcement already exists", HttpStatus.BAD_REQUEST),
-  ISSUE_NOTFOUND("047", "Issue not found", HttpStatus.NOT_FOUND);
+  ISSUE_NOTFOUND("047", "Issue not found", HttpStatus.NOT_FOUND),
+  TOKEN_NOT_FOUND("048", "Token not found",HttpStatus.NOT_FOUND),
+  EMAIL_ALREADY_CONFIRMED("049", "Email already confirmed " , HttpStatus.NOT_FOUND),
+  TOKEN_EXPIRED("050", "Token expired " ,HttpStatus.NOT_FOUND );
 
 
 

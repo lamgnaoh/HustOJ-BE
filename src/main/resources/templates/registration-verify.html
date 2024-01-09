@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Account verification</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;1,100;1,200;1,300;1,400;1,500;1,600;1,700&display=swap"
+      rel="stylesheet"
+  />
+  <style>
+    html,
+    *,
+    body {
+      font-family: "Poppins", sans-serif;
+    }
+
+    .container {
+      background-color: #ffffff;
+      width: 500px;
+      margin: 0 auto;
+      padding: 20px;
+      border-radius: 5px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+      color: #333333;
+      margin-top: 0;
+      font-size: 24px;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    .title {
+      font-weight: 500;
+      font-size: 16px;
+      line-height: 24px;
+      text-transform: uppercase;
+      color: #302a97;
+      margin: 24px 0;
+    }
+
+    p {
+      margin: 0;
+      color: #555555;
+      line-height: 1.5;
+      font-size: 16px;
+    }
+
+
+    .logo {
+      /*text-align: center;*/
+      margin-bottom: 20px;
+    }
+
+    .logo img {
+      width: 120px;
+      height: auto;
+    }
+
+    .footer {
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="logo">
+    <!--        <img src="logo.png" style="display: block; font-size: 14px; width: 25px; height: 25px;">-->
+    <h1>HUSTOJ</h1>
+  </div>
+  <h4 class="title">Account verification</h4>
+  <p>Hello,</p>
+  <p>Thank you for registering! To complete your registration, please click on the link below to verify:</p>
+  <p><a th:text="${verify_path}"></a></p>
+  <div class="footer">
+    <p>Thank you for joining us</p>
+    <br>
+    <p style="font-size: 13px"><em>If you do not register this account, please ignore the email. Sorry for bothering you!</em></p>
+  </div>
+</div>
+</body>
+</html>

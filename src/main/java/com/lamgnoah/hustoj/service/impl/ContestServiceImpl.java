@@ -301,6 +301,16 @@ public class ContestServiceImpl implements ContestService {
     User user = UserContext.getCurrentUser();
     Contest contest = contestRepository.findById(id)
         .orElseThrow(() -> new AppException(ErrorCode.NO_SUCH_CONTEST));
+    if ((contest.getStartDate().isBefore(LocalDateTime.now()) || contest.getStartDate()
+        .isEqual(LocalDateTime.now())) && contest.getStatus().equals(ContestStatus.NOT_STARTED)) {
+      setContestStatus(contest, ContestStatus.PROCESSING);
+    }
+
+    if ((contest.getEndDate().isBefore(LocalDateTime.now())) || (contest.getEndDate()
+        .isEqual(LocalDateTime.now()))) {
+      setContestStatus(contest, ContestStatus.ENDED);
+    }
+    contestRepository.save(contest);
     Optional<RankingUser> rankingUserOptional = rankingUserRepository.findByContestAndUser(contest,
         user);
 //    if user is not super admin or not author of the contest and never join the contest
