@@ -23,4 +23,8 @@ public class JwtUserDetailsService implements UserDetailsService {
     }
     return JwtUserFactory.create(user);
   }
+
+  public int enableUser(String email) {
+    return userRepository.enableUser(email);
+  }
 }

@@ -78,9 +78,8 @@ public class WebSecurityConfig {
             auth.requestMatchers(CorsUtils::isPreFlightRequest).permitAll()
                     .requestMatchers("/api/v1/auth/**").permitAll()
                     .requestMatchers("/api/v1/register").permitAll()
+                    .requestMatchers("/api/v1/verify").permitAll()
                     .requestMatchers("/api/v1/comment/page**").permitAll()
-//                Todo
-//                .requestMatchers("/api/v1/addAdmin").permitAll()
                 .requestMatchers("/api/v1/judge_server_heartbeat").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/problems/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/announcements").permitAll()
