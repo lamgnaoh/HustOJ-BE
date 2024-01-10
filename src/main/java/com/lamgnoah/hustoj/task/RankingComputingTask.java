@@ -41,7 +41,7 @@ public class RankingComputingTask {
           Long time = rankingUser.getTime();
           Integer acCount = rankingUser.getAcceptCount();
           Integer submitCount = rankingUser.getSubmitCount();
-          long zscore = (long) (acCount * Math.ceil(contestDuration/10.0) * 100 + time/1000);
+          long zscore = (long) ((100-acCount) * Math.ceil(contestDuration/10.0) * 100 + time/1000);
           redisTemplate.opsForZSet().add("contest:" + contest.getId(),
               String.valueOf(rankingUser.getUser().getId()),
               zscore);
