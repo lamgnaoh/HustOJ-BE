@@ -55,7 +55,9 @@ public enum ErrorCode {
   ISSUE_NOTFOUND("047", "Issue not found", HttpStatus.NOT_FOUND),
   TOKEN_NOT_FOUND("048", "Token not found",HttpStatus.NOT_FOUND),
   EMAIL_ALREADY_CONFIRMED("049", "Email already confirmed " , HttpStatus.NOT_FOUND),
-  TOKEN_EXPIRED("050", "Token expired " ,HttpStatus.NOT_FOUND );
+  TOKEN_EXPIRED("050", "Token expired " ,HttpStatus.NOT_FOUND ),
+  EMPTY_TEST_CASE("051","Empty testcase" , HttpStatus.BAD_REQUEST),
+  WRONG_TESTCASE_FORMAT( "052", "Wrong testcase format" ,HttpStatus.BAD_REQUEST );
 
 
 

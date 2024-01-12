@@ -24,7 +24,7 @@ public class CommonUtil {
     return str == null || str.isEmpty();
   }
 
-  public static List<File> unzip(String path) throws AppException {
+  public static List<File> unzip(String path , List<String> testCaseList) throws AppException {
     String destDirectoryPath = path.substring(0, path.lastIndexOf(File.separator));
     File destDirectory = new File(destDirectoryPath);
     List<File> fileList = new ArrayList<>();
@@ -36,6 +36,10 @@ public class CommonUtil {
         throw new AppException(ErrorCode.EMPTY_ZIP_FILE);
       }
       while (zipEntry != null) {
+        if (!testCaseList.contains(zipEntry.getName())) {
+          zipEntry = zis.getNextEntry();
+          continue;
+        }
         fileList.add(new File(destDirectoryPath + File.separator + zipEntry.getName()));
         File unzippedFile = newFile(destDirectory, zipEntry);
         try (FileOutputStream fos = new FileOutputStream(unzippedFile)) {

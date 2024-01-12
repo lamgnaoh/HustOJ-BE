@@ -26,11 +26,15 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -44,11 +48,19 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
 @Slf4j
 @RequiredArgsConstructor
 public class FileServiceImpl implements FileService {
-  @Value("${upload.path}")
-  private String directory;
+
   private final ProblemRepository problemRepository;
   private final ObjectMapper objectMapper;
+  @Value("${upload.path}")
+  private String directory;
 
+  private static List<String> getZipEntryNames(File zipFile) throws IOException {
+    List<String> nameList = new ArrayList<>();
+    try (ZipFile zip = new ZipFile(zipFile)) {
+      zip.stream().map(ZipEntry::getName).forEach(nameList::add);
+    }
+    return nameList;
+  }
 
   @Override
   public FileUploadingDto uploadTestCase(MultipartFile file, HttpServletRequest request)
@@ -59,7 +71,7 @@ public class FileServiceImpl implements FileService {
     if (file.isEmpty()) {
       throw new AppException(ErrorCode.EMPTY_FILE);
     }
-    if (!Objects.equals(extension, "zip")){
+    if (!Objects.equals(extension, "zip")) {
       throw new AppException(ErrorCode.NOT_A_ZIP_FILE);
     }
 
@@ -76,7 +88,12 @@ public class FileServiceImpl implements FileService {
     try (OutputStream os = new FileOutputStream(tempPath)) {
       os.write(file.getBytes());
     } catch (IOException e) {
-      log.error("Cannot upload test case : " , e);
+      log.error("Cannot upload test case : ", e);
+    }
+    List<String> nameList = getZipEntryNames(new File(tempPath));
+    List<String> testCaseList = filterNameList(nameList, "");
+    if (testCaseList.isEmpty()) {
+      throw new AppException(ErrorCode.EMPTY_TEST_CASE);
     }
 
 //    process zip
@@ -84,11 +101,12 @@ public class FileServiceImpl implements FileService {
     String prefix =
         File.separator + "problems" + File.separator + testCaseId + File.separator;
     String relativeTestCasePath = saveFile(tempPath, prefix);
-    List<Map<String, Object>> info = processTestCase(relativeTestCasePath, false);
-    return new FileUploadingDto(testCaseId,info, false);
+    List<Map<String, Object>> info = processTestCase(relativeTestCasePath, false, testCaseList);
+    return new FileUploadingDto(testCaseId, info, false);
   }
 
-  private List<Map<String, Object>> processTestCase(String path, Boolean specialJudge) throws JsonProcessingException {
+  private List<Map<String, Object>> processTestCase(String path, Boolean specialJudge,
+      List<String> testCaseList) throws JsonProcessingException {
     String testcasePath = directory + path;
     String destDirectoryPath = testcasePath.substring(0, testcasePath.lastIndexOf(File.separator));
 
@@ -96,7 +114,7 @@ public class FileServiceImpl implements FileService {
     Map<String, String> md5Cache = new HashMap<>();
     Map<String, Object> testCaseInfo = new HashMap<>();
 
-    List<File> fileList = CommonUtil.unzip(testcasePath);
+    List<File> fileList = CommonUtil.unzip(testcasePath, testCaseList);
 
     File[] files = new File[fileList.size()];
     files = fileList.toArray(files); // file in-out
@@ -110,10 +128,13 @@ public class FileServiceImpl implements FileService {
         int index = 0;
         for (int i = 0; i < len; i++) {
           if (middleArray[i] == 13) {
-            if (i + 1 < len && middleArray[i + 1] == 10) { // move the cursor point to the begining of next line
+            if (i + 1 < len
+                && middleArray[i + 1] == 10) { // move the cursor point to the begining of next line
               inputFiletoBytes[index++] = 10;
               i++;
-            } else inputFiletoBytes[index++] = middleArray[i];
+            } else {
+              inputFiletoBytes[index++] = middleArray[i];
+            }
           } else {
             inputFiletoBytes[index++] = middleArray[i];
           }
@@ -121,7 +142,9 @@ public class FileServiceImpl implements FileService {
         for (int i = index - 1; i >= 0; i--) {
           if (inputFiletoBytes[i] == 10) {
             index--;
-          } else break;
+          } else {
+            break;
+          }
         }
         byte[] finalArray = new byte[index];
         System.arraycopy(inputFiletoBytes, 0, finalArray, 0, index);
@@ -131,7 +154,7 @@ public class FileServiceImpl implements FileService {
           md5Cache.put(file.getName(), CommonUtil.md5(finalArray));
         }
       } catch (IOException | NoSuchAlgorithmException e) {
-        log.error("Error while process test case upload :",e);
+        log.error("Error while process test case upload :", e);
         throw new AppException(ErrorCode.INTERNAL_SERVER_ERROR);
       }
 
@@ -170,6 +193,24 @@ public class FileServiceImpl implements FileService {
     return info;
   }
 
+  private List<String> filterNameList(List<String> nameList, String dir) {
+    List<String> ret = new ArrayList<>();
+    int prefix = 1;
+    while (true) {
+      String inName = prefix + ".in";
+      String outName = prefix + ".out";
+      if (nameList.contains(dir + inName) && nameList.contains(dir + outName)) {
+        ret.add(inName);
+        ret.add(outName);
+        prefix++;
+      } else {
+        return ret.stream().sorted(Comparator.naturalOrder())
+            .collect(Collectors.toList());
+      }
+    }
+  }
+
+
   @Override
   public String saveFile(String tempPath, String relativeDirectory) throws IOException {
     File tempFile = new File(tempPath);
@@ -192,16 +233,17 @@ public class FileServiceImpl implements FileService {
     User user = UserContext.getCurrentUser();
     Problem problem = problemRepository.findById(problemId)
         .orElseThrow(() -> new AppException(ErrorCode.PROBLEM_NOTFOUND));
-    if (!CommonUtil.ensureCreatedBy(problem , user)){
+    if (!CommonUtil.ensureCreatedBy(problem, user)) {
       throw new AppException(ErrorCode.OBJECT_NOT_CREATED_BY_USER);
     }
     String testcaseDir = directory + File.separator + "problems" + File.separator +
         problem.getTestCaseId() + File.separator;
-    if (!Files.isDirectory(Paths.get(testcaseDir))){
+    if (!Files.isDirectory(Paths.get(testcaseDir))) {
       throw new AppException(ErrorCode.TEST_CASE_NOT_FOUND);
     }
     response.setContentType("application/octet-stream");
-    response.setHeader("Content-Disposition", "attachment;filename=problem_" + problemId + "_test_cases.zip");
+    response.setHeader("Content-Disposition",
+        "attachment;filename=problem_" + problemId + "_test_cases.zip");
     response.setStatus(HttpServletResponse.SC_OK);
 //    list all file from test case dir
     List<String> files = FileUtil.listAllFilesFromGivenPath(testcaseDir);
@@ -210,7 +252,7 @@ public class FileServiceImpl implements FileService {
       try (final ZipOutputStream zipOut = new ZipOutputStream(response.getOutputStream())) {
         /* Gather all files and put it in a ZIP */
         for (String file : files) {
-          FileUtil.addGivenFileToZip(zipOut, file , testcaseDir);
+          FileUtil.addGivenFileToZip(zipOut, file, testcaseDir);
         }
       }
     };
