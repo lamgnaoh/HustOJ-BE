@@ -43,7 +43,7 @@ public class Problem extends BaseEntity {
   @Column(name = "title")
   private String title ;
 
-  @Column(name = "description")
+  @Column(columnDefinition = "TEXT")
   private String description;
 
   @Column(name = "time_limit")
@@ -52,10 +52,10 @@ public class Problem extends BaseEntity {
   @Column (name = "ram_limit")
   private Integer ramLimit;
 
-  @Column(name = "input_description" )
+  @Column(name = "input_description" , length = 500)
   private String inputDescription;
 
-  @Column(name = "output_description")
+  @Column(name = "output_description" , length = 500)
   private String outputDescription;
 
   @Column(name = "submit_count")
