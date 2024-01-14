@@ -57,7 +57,9 @@ public enum ErrorCode {
   EMAIL_ALREADY_CONFIRMED("049", "Email already confirmed " , HttpStatus.NOT_FOUND),
   TOKEN_EXPIRED("050", "Token expired " ,HttpStatus.NOT_FOUND ),
   EMPTY_TEST_CASE("051","Empty testcase" , HttpStatus.BAD_REQUEST),
-  WRONG_TESTCASE_FORMAT( "052", "Wrong testcase format" ,HttpStatus.BAD_REQUEST );
+  WRONG_TESTCASE_FORMAT( "052", "Wrong testcase format" ,HttpStatus.BAD_REQUEST ),
+  TOKEN_ALREADY_USED("053", "Token already used" , HttpStatus.BAD_REQUEST),
+  PASSWORD_NOT_MATCH( "054", "Password do not match" , HttpStatus.BAD_REQUEST);
 
 
 

@@ -79,6 +79,8 @@ public class WebSecurityConfig {
                     .requestMatchers("/api/v1/auth/**").permitAll()
                     .requestMatchers("/api/v1/register").permitAll()
                     .requestMatchers("/api/v1/verify").permitAll()
+                    .requestMatchers("/api/v1/forgot-password").permitAll()
+                    .requestMatchers("/api/v1/reset-password").permitAll()
                     .requestMatchers("/api/v1/comment/page**").permitAll()
                 .requestMatchers("/api/v1/judge_server_heartbeat").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/problems/**").permitAll()

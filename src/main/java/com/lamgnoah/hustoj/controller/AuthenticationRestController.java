@@ -1,5 +1,7 @@
 package com.lamgnoah.hustoj.controller;
 
+import com.lamgnoah.hustoj.dto.RecoverPasswordDTO;
+import com.lamgnoah.hustoj.dto.ResetPasswordDTO;
 import com.lamgnoah.hustoj.dto.UserDTO;
 import com.lamgnoah.hustoj.entity.User;
 import com.lamgnoah.hustoj.exception.AppException;
@@ -46,5 +48,15 @@ public class AuthenticationRestController {
     return ResponseEntity.ok(authenticationService.verifyToken(token));
   }
 
+  @PostMapping(value = "/api/v1/forgot-password")
+  public ResponseEntity<String> forgotPassword(@RequestBody RecoverPasswordDTO recoverPasswordDTO , HttpServletRequest request){
+    return ResponseEntity.ok(authenticationService.forgotPassword(recoverPasswordDTO , request));
+  }
+
+  @PostMapping(value = "/api/v1/reset-password")
+  public ResponseEntity<Void> verifyResetPassword(@RequestParam("token") String token , @RequestBody ResetPasswordDTO resetPasswordDTO , HttpServletRequest request){
+    authenticationService.resetPassword(token , resetPasswordDTO);
+    return ResponseEntity.ok().build();
+  }
 
 }

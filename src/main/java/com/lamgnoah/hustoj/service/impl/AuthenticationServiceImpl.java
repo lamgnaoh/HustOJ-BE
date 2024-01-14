@@ -3,6 +3,8 @@ package com.lamgnoah.hustoj.service.impl;
 import com.lamgnoah.hustoj.domain.enums.AuthorityName;
 import com.lamgnoah.hustoj.domain.enums.ErrorCode;
 import com.lamgnoah.hustoj.domain.enums.ProblemPermission;
+import com.lamgnoah.hustoj.dto.RecoverPasswordDTO;
+import com.lamgnoah.hustoj.dto.ResetPasswordDTO;
 import com.lamgnoah.hustoj.dto.UserDTO;
 import com.lamgnoah.hustoj.entity.Authority;
 import com.lamgnoah.hustoj.entity.Token;
@@ -19,6 +21,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -114,4 +117,42 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     jwtUserDetailsService.enableUser(token.getUser().getEmail());
     return "verified";
   }
+
+  @Override
+  public String forgotPassword(RecoverPasswordDTO recoverPasswordDTO , HttpServletRequest request) {
+    String email = recoverPasswordDTO.getEmail();
+    Optional<User> userByEmail = userRepository.findByEmail(email);
+    if (userByEmail.isEmpty()){
+      throw new AppException(ErrorCode.NO_SUCH_USER);
+    }
+    String token = UUID.randomUUID().toString();
+    Token confirmationToken = new Token(token , LocalDateTime.now().plusMinutes(15) , userByEmail.get());
+    String url = request.getHeader("Origin") != null ? request.getHeader("Origin") : defaultUrl ;
+    String verifyPath = url + "/reset-password/" + token;
+    tokenService.saveToken(confirmationToken);
+    emailService.send(email, emailService.buildEmail(verifyPath , "forgot-password"));
+    return "Send email successfully";
+  }
+
+  @Override
+  public void resetPassword(String token , ResetPasswordDTO dto) {
+    if (!dto.getNewPassword().equals(dto.getConfirmPassword())){
+      throw new AppException(ErrorCode.PASSWORD_NOT_MATCH);
+    }
+    Token resetPasswordToken = tokenService.getToken(token)
+        .orElseThrow(() -> new AppException(ErrorCode.TOKEN_NOT_FOUND));
+    if (resetPasswordToken.getConfirmedAt() != null) {
+      throw new AppException(ErrorCode.TOKEN_ALREADY_USED);
+    }
+
+    LocalDateTime expiredAt = resetPasswordToken.getExpiresAt();
+    if (expiredAt.isBefore(LocalDateTime.now())) {
+      throw new AppException(ErrorCode.TOKEN_EXPIRED);
+    }
+    tokenService.setConfirmedAt(token);
+    User user = resetPasswordToken.getUser();
+    user.setPassword(dto.getNewPassword());
+    userRepository.save(user);
+  }
+
 }
