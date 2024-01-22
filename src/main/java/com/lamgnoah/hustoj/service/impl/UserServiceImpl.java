@@ -41,6 +41,7 @@ public class UserServiceImpl implements UserService {
   private final SubmissionRepository submissionRepository;
   private final RankingUserRepository rankingUserRepository;
   private final ContestRepository contestRepository;
+  private final TokenRepository tokenRepository;
 
   @Transactional
   @Override
@@ -189,6 +190,7 @@ public class UserServiceImpl implements UserService {
     problemRepository.deleteAllByAuthor(user);
     submissionRepository.deleteAllByAuthor(user);
     rankingUserRepository.deleteAllByUser(user);
+    tokenRepository.deleteAllByUser(user);
     userRepository.delete(user);
   }
 
