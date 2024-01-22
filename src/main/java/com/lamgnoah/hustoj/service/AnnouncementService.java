@@ -8,11 +8,11 @@ public interface AnnouncementService {
 
   PageDTO<AnnouncementDTO> findAnnouncement(int page, int size);
 
-  AnnouncementDTO findAnnouncementById(String id) throws AppException;
+  AnnouncementDTO findAnnouncementById(Long id) throws AppException;
 
   AnnouncementDTO create(AnnouncementDTO announcementDTO) throws AppException;
 
   AnnouncementDTO update(AnnouncementDTO announcementDTO) throws AppException;
 
-  AnnouncementDTO delete(String id) throws AppException;
+  AnnouncementDTO delete(Long id) throws AppException;
 }

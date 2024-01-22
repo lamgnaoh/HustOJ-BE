@@ -34,7 +34,7 @@ public class AnnouncementRestController {
   }
 
   @GetMapping(value = "/{id}")
-  public AnnouncementDTO getAnnouncement(@PathVariable String id) throws AppException {
+  public AnnouncementDTO getAnnouncement(@PathVariable Long id) throws AppException {
     return announcementService.findAnnouncementById(id);
   }
 
@@ -55,7 +55,7 @@ public class AnnouncementRestController {
   }
   @DeleteMapping(value = "/{id}")
   @PreAuthorize("hasAnyRole('SUPER_ADMIN')")
-  public AnnouncementDTO delete(@PathVariable String id) throws AppException {
+  public AnnouncementDTO delete(@PathVariable Long id) throws AppException {
     return announcementService.delete(id);
   }
 }

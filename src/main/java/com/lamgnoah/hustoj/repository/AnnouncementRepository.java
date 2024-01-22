@@ -6,7 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 public interface AnnouncementRepository
-    extends JpaRepository<Announcement, String>, JpaSpecificationExecutor<Announcement> {
+    extends JpaRepository<Announcement, Long>, JpaSpecificationExecutor<Announcement> {
 
   Optional<Announcement> findByTitle(String title);
 }

@@ -37,7 +37,7 @@ public class AnnouncementServiceImpl implements AnnouncementService {
   }
 
   @Override
-  public AnnouncementDTO findAnnouncementById(String id) throws AppException {
+  public AnnouncementDTO findAnnouncementById(Long id) throws AppException {
     Announcement announcement =
         announcementRepository
             .findById(id)
@@ -62,10 +62,9 @@ public class AnnouncementServiceImpl implements AnnouncementService {
   @Override
   public AnnouncementDTO update(AnnouncementDTO announcementDTO) throws AppException {
     Optional<Announcement> announcementOptional =
-        announcementRepository.findByTitle(announcementDTO.getTitle());
-    if (announcementOptional.isPresent()
-        && !announcementOptional.get().getId().equals(announcementDTO.getId())) {
-      throw new AppException(ErrorCode.HAVE_SUCH_ANNOUNCEMENT);
+        announcementRepository.findById(announcementDTO.getId());
+    if (announcementOptional.isEmpty()) {
+      throw new AppException(ErrorCode.NO_SUCH_ANNOUNCEMENT);
     }
     Announcement announcement = announcementOptional.get();
     if (!announcement.getTitle().equals(announcementDTO.getTitle())){
@@ -78,7 +77,7 @@ public class AnnouncementServiceImpl implements AnnouncementService {
   }
 
   @Override
-  public AnnouncementDTO delete(String id) throws AppException {
+  public AnnouncementDTO delete(Long id) throws AppException {
     Announcement announcement =
         announcementRepository
             .findById(id)
