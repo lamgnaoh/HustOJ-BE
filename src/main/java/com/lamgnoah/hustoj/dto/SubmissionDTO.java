@@ -40,5 +40,6 @@ public class SubmissionDTO implements Serializable {
   private String resultDetail; // statistic_info
   private Double memoryPercentile;
   private Double durationPercentile;
+  private String waDebugInfo;
 
 }

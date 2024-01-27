@@ -13,4 +13,5 @@ public class JudgeResponse {
   private Integer exit_code;
   private String output_md5;
   private Integer test_case;
+  private String output;
 }

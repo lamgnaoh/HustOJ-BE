@@ -13,6 +13,7 @@ import com.lamgnoah.hustoj.domain.UserContext;
 import com.lamgnoah.hustoj.domain.enums.*;
 import com.lamgnoah.hustoj.domain.pojos.JudgeResponse;
 import com.lamgnoah.hustoj.domain.pojos.JudgeResult;
+import com.lamgnoah.hustoj.domain.pojos.WADebugInfo;
 import com.lamgnoah.hustoj.dto.PageDTO;
 import com.lamgnoah.hustoj.dto.SubmissionDTO;
 import com.lamgnoah.hustoj.dto.TestcaseInfoDTO;
@@ -27,6 +28,9 @@ import com.lamgnoah.hustoj.utils.CommonUtil;
 import com.lamgnoah.hustoj.utils.HttpUtil;
 import jakarta.annotation.PostConstruct;
 import jakarta.persistence.criteria.Predicate;
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import lombok.RequiredArgsConstructor;
 import org.springframework.aop.framework.AopContext;
 import org.springframework.beans.factory.annotation.Value;
@@ -64,6 +68,9 @@ public class SubmissionServiceImpl implements SubmissionService {
   private String judgeServerBaseURL;
   private String judgeURL;
 
+  @Value("${upload.path}")
+  private String uploadPath;
+
   @PostConstruct
   public void init() {
     this.judgeURL = judgeServerBaseURL + "/judge";
@@ -93,11 +100,67 @@ public class SubmissionServiceImpl implements SubmissionService {
     submission.setDuration(judgeResult.getRealTime());
     submission.setResult(judgeResult.getResult());
     submission.setResultDetail(objectMapper.writeValueAsString(judgeResult));
+    if (judgeResult.getResult().equals(Result.WRONG_ANSWER)){
+      // read input output expected
+      String testcaseId = problem.getTestCaseId();
+      Map<Integer, WADebugInfo> waDebugInfo = new HashMap<>();
+      for (Integer testcaseNo: judgeResult.getDebugInfo().keySet()){
+        String output = judgeResult.getDebugInfo().get(testcaseNo);
+        String input = readTestCaseFile(testcaseId, testcaseNo, ".in");
+        String expectedOutput = readTestCaseFile(testcaseId, testcaseNo, ".out");
+        waDebugInfo.put(testcaseNo, WADebugInfo.builder()
+                .input(input)
+                .expectedOutput(expectedOutput)
+                .output(output)
+                .build());
+      }
+      String debugInfo = objectMapper.writeValueAsString(waDebugInfo);
+      submission.setWaDebugInfo(debugInfo);
+    }
     submission.setMemory(judgeResult.getMemory());
     SubmissionDTO dto = submissionMapper.entityToDTO(submissionRepository.save(submission));
     SubmissionService submissionService = (SubmissionService) AopContext.currentProxy();
     submissionService.counter(dto);
     return dto;
+  }
+
+  private String readTestCaseFile(String testcaseId, Integer testcaseNo, String type) {
+    String filePath = uploadPath + "/problems/" + testcaseId + "/" + testcaseNo + type;
+    File file =  new File(filePath);
+    String content = "";
+    try (BufferedInputStream inputFile = new BufferedInputStream(new FileInputStream(file))) {
+      int len = inputFile.available(); // return the sum of bytes remained to be read from this input stream
+      byte[] middleArray = new byte[len];
+      inputFile.read(middleArray, 0, len);
+      byte[] inputFiletoBytes = new byte[len];
+      int index = 0;
+      for (int i = 0; i < len; i++) {
+        if (middleArray[i] == 13) {
+          if (i + 1 < len
+              && middleArray[i + 1] == 10) { // move the cursor point to the begining of next line
+            inputFiletoBytes[index++] = 10;
+            i++;
+          } else {
+            inputFiletoBytes[index++] = middleArray[i];
+          }
+        } else {
+          inputFiletoBytes[index++] = middleArray[i];
+        }
+      }
+      for (int i = index - 1; i >= 0; i--) {
+        if (inputFiletoBytes[i] == 10) {
+          index--;
+        } else {
+          break;
+        }
+      }
+      byte[] finalArray = new byte[index];
+      System.arraycopy(inputFiletoBytes, 0, finalArray, 0, index);
+      content = new String(finalArray);
+    }catch (IOException e) {
+
+    }
+    return content;
   }
 
   @Override
@@ -137,6 +200,7 @@ public class SubmissionServiceImpl implements SubmissionService {
     submission.setResult(judgeResult.getResult());
     submission.setResultDetail(objectMapper.writeValueAsString(judgeResult));
     submission.setMemory(judgeResult.getMemory());
+    submission.setWaDebugInfo(null);
     submission = submissionRepository.save(submission);
     SubmissionDTO dto = submissionMapper.entityToDTO(submission);
     SubmissionService submissionService = (SubmissionService) AopContext.currentProxy();
@@ -596,6 +660,7 @@ public class SubmissionServiceImpl implements SubmissionService {
     Integer score = problem.getRuleType().equals(ContestRuleType.OI) ? 0 : null;
     result.setResult(Result.ACCEPTED);
     boolean resultResolved = false;
+    Map<Integer,String> wrongAnswerTestcaseOutput = new HashMap<>();
     for (JudgeResponse res : data) {
       if (res.getCpu_time() > maxCPUTime) {
         maxCPUTime = res.getCpu_time();
@@ -613,6 +678,7 @@ public class SubmissionServiceImpl implements SubmissionService {
           break;
         case -1:
           wrongAnswerCount++;
+          wrongAnswerTestcaseOutput.put(res.getTest_case() , res.getOutput());
           break;
         case 1:
           cpuTimeLimitExceededCount++;
@@ -639,6 +705,9 @@ public class SubmissionServiceImpl implements SubmissionService {
           resultResolved = true;
         }
       }
+    }
+    if (result.getResult().equals(Result.WRONG_ANSWER)){
+      result.setDebugInfo(wrongAnswerTestcaseOutput);
     }
     result.setCpuTime(maxCPUTime);
     result.setMemory(maxMemory);

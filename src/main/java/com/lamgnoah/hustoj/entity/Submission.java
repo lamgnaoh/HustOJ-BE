@@ -53,6 +53,9 @@ public class Submission extends BaseEntity {
   @Column(columnDefinition = "TEXT")
   private String resultDetail;
 
+  @Column(columnDefinition = "TEXT")
+  private String waDebugInfo;
+
   @Fetch(FetchMode.JOIN)
   @ManyToOne(fetch = FetchType.EAGER)
   private Contest contest;
