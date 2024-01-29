@@ -536,9 +536,9 @@ public class SubmissionServiceImpl implements SubmissionService {
         contestProblem.setAcceptRate(contestProblem.getAcceptCount() * 1.0 / contestProblem.getSubmitCount());
       } else { // if user submit this contest problem before
         oiProblemStatus.getContestProblem().get(problem.getId()).setScore(judgeResult.getScore());
-        oiProblemStatus.getContestProblem().get(problem.getId())
-            .setStatus(submissionDTO.getResult());
         if (!oiProblemStatus.getContestProblem().get(problem.getId()).getStatus().equals(Result.ACCEPTED.name())){
+          oiProblemStatus.getContestProblem().get(problem.getId())
+              .setStatus(submissionDTO.getResult());
           contestProblem.setSubmitCount(contestProblem.getSubmitCount() + 1);
           if (Result.ACCEPTED.equals(Result.valueOf(submissionDTO.getResult()))) {
             contestProblem.setAcceptCount(contestProblem.getAcceptCount() + 1);
